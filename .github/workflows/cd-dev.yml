@@ -50,6 +50,8 @@ jobs:
           tags: |
             nx-web-dev:latest
             nx-web-dev:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://dev-api.pasindusampath.com
           cache-from: type=gha
           cache-to: type=gha,mode=max
       

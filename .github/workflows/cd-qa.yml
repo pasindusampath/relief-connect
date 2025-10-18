@@ -50,6 +50,8 @@ jobs:
           tags: |
             nx-web-qa:latest
             nx-web-qa:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://qa-api.pasindusampath.com
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
