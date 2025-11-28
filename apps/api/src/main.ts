@@ -1,9 +1,7 @@
 import 'reflect-metadata'; // Required for decorators - MUST BE FIRST!
-import dotenv from 'dotenv';
+// Note: Environment variables are loaded in config/database.ts
+// This ensures they're loaded before any database configuration
 import Server from './server';
-
-// Load environment variables
-dotenv.config();
 
 // Get port from environment or use default
 const port = parseInt(process.env.PORT || '3000', 10);

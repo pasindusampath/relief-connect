@@ -16,33 +16,53 @@ const ENV_FILE_MAP: Record<Environment, string> = {
 
 /**
  * Load environment-specific .env file
- * Priority: .env.[environment] > .env
+ * Priority: .env.[environment] > .env (in apps/api directory)
  * 
  * Examples:
- * - Environment.DEVELOPMENT → loads .env.dev
- * - Environment.QA → loads .env.qa
- * - Environment.STAGING → loads .env.staging
- * - Environment.PRODUCTION → loads .env.prod
+ * - Environment.DEVELOPMENT → loads .env.dev, then falls back to .env
+ * - Environment.QA → loads .env.qa, then falls back to .env
+ * - Environment.STAGING → loads .env.staging, then falls back to .env
+ * - Environment.PRODUCTION → loads .env.prod, then falls back to .env
  */
 const currentEnv = getCurrentEnvironment();
 const envFile = ENV_FILE_MAP[currentEnv];
 const envPath = path.resolve(process.cwd(), 'apps/api', envFile);
+const defaultEnvPath = path.resolve(process.cwd(), 'apps/api', '.env');
 
 // Try to load environment-specific file first
-const result = dotenv.config({ path: envPath });
+let result = dotenv.config({ path: envPath });
 
-// Fallback to default .env if environment-specific file doesn't exist locally
-if (result.error && currentEnv !== Environment.DEVELOPMENT) {
-  console.log(`⚠️  ${envFile} not found, falling back to .env`);
-  dotenv.config();
-} else if (!result.error) {
+// Fallback to default .env in apps/api directory if environment-specific file doesn't exist
+if (result.error) {
+  console.log(`⚠️  ${envFile} not found, trying .env in apps/api directory`);
+  result = dotenv.config({ path: defaultEnvPath });
+  
+  if (!result.error) {
+    console.log(`✓ Loaded environment config from: .env`);
+  }
+} else {
   console.log(`✓ Loaded environment config from: ${envFile}`);
+}
+
+// Final fallback: try .env in current working directory (for backward compatibility)
+if (result.error) {
+  console.log(`⚠️  .env not found in apps/api, trying root directory`);
+  dotenv.config(); // This loads from process.cwd()
+  
+  // Check if we got DB_NAME after this fallback
+  if (process.env.DB_NAME) {
+    console.log(`✓ Loaded environment config from root .env`);
+  }
 }
 
 // In production/VPS, environment variables may be set directly by docker-compose
 // which overrides file-based .env, so this is fine
-if (result.error && !process.env.DB_NAME) {
+if (!process.env.DB_NAME) {
   console.warn(`⚠️  No .env file found and no DB_NAME environment variable set`);
+  console.warn(`   Expected locations:`);
+  console.warn(`   - apps/api/${envFile}`);
+  console.warn(`   - apps/api/.env`);
+  console.warn(`   - .env (root directory)`);
 }
 
 /**
