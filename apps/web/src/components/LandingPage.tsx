@@ -277,11 +277,19 @@ export default function LandingPage() {
   const analytics = useMemo(() => {
     const totalRequests = helpRequests.length
     const totalPeople = helpRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/People:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 1)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.totalPeople || (() => {
+        const match = req.shortNote?.match(/People:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 1
+      })())
     }, 0)
 
     const totalRations = helpRequests.reduce((sum, req) => {
+      // Use rationItems array if available
+      if (req.rationItems && req.rationItems.length > 0) {
+        return sum + req.rationItems.length
+      }
+      // Fallback to parsing shortNote
       const itemsMatch = req.shortNote?.match(/Items:\s*(.+)/)
       if (itemsMatch) {
         const items = itemsMatch[1]
@@ -335,13 +343,19 @@ export default function LandingPage() {
 
     if (appliedFilters.type === 'individual') {
       filtered = filtered.filter((request) => {
-        const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
-        return peopleMatch && parseInt(peopleMatch[1]) <= 10
+        const peopleCount = request.totalPeople || (() => {
+          const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
+          return peopleMatch ? parseInt(peopleMatch[1]) : 1
+        })()
+        return peopleCount <= 10
       })
     } else if (appliedFilters.type === 'group') {
       filtered = filtered.filter((request) => {
-        const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
-        return peopleMatch && parseInt(peopleMatch[1]) > 10
+        const peopleCount = request.totalPeople || (() => {
+          const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
+          return peopleMatch ? parseInt(peopleMatch[1]) : 1
+        })()
+        return peopleCount > 10
       })
     }
 
@@ -352,18 +366,27 @@ export default function LandingPage() {
   const requestsAnalytics = useMemo(() => {
     const totalRequests = filteredRequests.length
     const totalPeople = filteredRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/People:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 1)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.totalPeople || (() => {
+        const match = req.shortNote?.match(/People:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 1
+      })())
     }, 0)
 
     const totalKids = filteredRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/Kids:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 0)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.children || (() => {
+        const match = req.shortNote?.match(/Kids:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 0
+      })())
     }, 0)
 
     const totalElders = filteredRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/Elders:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 0)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.elders || (() => {
+        const match = req.shortNote?.match(/Elders:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 0
+      })())
     }, 0)
 
     const daysOfSupply = 7
@@ -785,12 +808,15 @@ export default function LandingPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredRequests.map((request) => {
-                  const name =
-                    request.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Anonymous'
-                  const peopleCount = request.shortNote?.match(/People:\s*(\d+)/)?.[1] || '1'
-                  const kidsCount = request.shortNote?.match(/Kids:\s*(\d+)/)?.[1] || '0'
-                  const eldersCount = request.shortNote?.match(/Elders:\s*(\d+)/)?.[1] || '0'
-                  const items = request.shortNote?.match(/Items:\s*(.+)/)?.[1] || 'Various items'
+                  // Use real data from API response fields
+                  const name = request.name || request.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Anonymous'
+                  const peopleCount = request.totalPeople || request.shortNote?.match(/People:\s*(\d+)/)?.[1] || '1'
+                  const kidsCount = request.children || request.shortNote?.match(/Kids:\s*(\d+)/)?.[1] || '0'
+                  const eldersCount = request.elders || request.shortNote?.match(/Elders:\s*(\d+)/)?.[1] || '0'
+                  // Use rationItems if available, otherwise parse from shortNote
+                  const items = request.rationItems && request.rationItems.length > 0
+                    ? request.rationItems.join(', ')
+                    : request.shortNote?.match(/Items:\s*(.+)/)?.[1] || 'Various items'
                   const requestType = request.shortNote?.includes('Camp') ? 'Camp' : 'Family'
 
                   return (
@@ -836,6 +862,11 @@ export default function LandingPage() {
                             <span className="font-medium truncate">
                               {request.approxArea || 'Unknown location'}
                             </span>
+                            {request.lat != null && request.lng != null && (
+                              <span className="text-xs text-gray-500 ml-auto">
+                                {Number(request.lat).toFixed(6)}, {Number(request.lng).toFixed(6)}
+                              </span>
+                            )}
                           </div>
 
                           {/* People Details */}

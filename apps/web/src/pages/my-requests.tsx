@@ -62,51 +62,7 @@ interface VictimRequest {
   items: string
 }
 
-// Dummy data for donor requests (donations made)
-const dummyDonorRequests: DonorRequest[] = [
-  {
-    id: 1,
-    requestId: 101,
-    requestTitle: 'Family of 5 needs food supplies',
-    location: 'Colombo',
-    category: HelpRequestCategory.FOOD_WATER,
-    urgency: Urgency.HIGH,
-    status: 'completed',
-    donatedItems: 'Food & Water (5), Rice (10kg), Canned Goods (12)',
-    donatedDate: '2024-01-15',
-    contact: '+94771234567',
-    contactType: 'Phone',
-    shortNote: 'Name: John Doe, People: 5, Kids: 2, Elders: 2. Items: Food & Water (3), Torch (2)',
-  },
-  {
-    id: 2,
-    requestId: 102,
-    requestTitle: 'Elderly couple needs medical supplies',
-    location: 'Kandy',
-    category: HelpRequestCategory.MEDICAL,
-    urgency: Urgency.MEDIUM,
-    status: 'in_progress',
-    donatedItems: 'Medicine (5), First Aid Kit (2)',
-    donatedDate: '2024-01-18',
-    contact: '+94771234568',
-    contactType: 'Phone',
-    shortNote: 'Name: Jane Smith, People: 2, Elders: 2. Items: Medicine (5), First Aid Kit (2)',
-  },
-  {
-    id: 3,
-    requestId: 103,
-    requestTitle: 'Group needs shelter assistance',
-    location: 'Galle',
-    category: HelpRequestCategory.SHELTER,
-    urgency: Urgency.HIGH,
-    status: 'pending',
-    donatedItems: 'Tents (3), Blankets (10)',
-    donatedDate: '2024-01-20',
-    contact: 'shelter@example.com',
-    contactType: 'Email',
-    shortNote: 'Name: Group Request, People: 15, Kids: 5, Elders: 3. Items: Tents (3), Blankets (10)',
-  },
-]
+// Donor requests are now loaded from localStorage
 
 // Dummy data for victim requests (help requests made)
 const dummyVictimRequests: VictimRequest[] = [
@@ -162,19 +118,53 @@ export default function MyRequestsPage() {
     (tab as RequestType) || 'donor'
   )
   const [userInfo, setUserInfo] = useState<{ name?: string; identifier?: string } | null>(null)
-  const [donorRequests, setDonorRequests] = useState<DonorRequest[]>(() => {
-    // Load donation statuses from localStorage
-    if (typeof window !== 'undefined') {
+  const [donorRequests, setDonorRequests] = useState<DonorRequest[]>([])
+
+  // Load donations from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && userInfo) {
+      const allDonations = JSON.parse(
+        localStorage.getItem('donations') || '[]'
+      )
       const donationStatuses = JSON.parse(
         localStorage.getItem('donation_statuses') || '{}'
       )
-      return dummyDonorRequests.map((request) => ({
-        ...request,
-        status: (donationStatuses[request.id] as DonorRequest['status']) || request.status,
-      }))
+      
+      // Filter donations by current user's contact info
+      const userDonations = allDonations
+        .filter((donation: any) => 
+          donation.donorContact === userInfo.identifier ||
+          donation.donorName === userInfo.name ||
+          donation.donorName === userInfo.identifier
+        )
+        .map((donation: any) => {
+          // Try to get request details if available
+          const helpRequests = JSON.parse(
+            localStorage.getItem('help_requests') || '[]'
+          )
+          const relatedRequest = helpRequests.find((req: any) => req.id === donation.requestId)
+          
+          return {
+            id: donation.id,
+            requestId: donation.requestId || 0,
+            requestTitle: relatedRequest 
+              ? (relatedRequest.name || relatedRequest.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Request')
+              : `Request #${donation.requestId || 'Unknown'}`,
+            location: relatedRequest?.approxArea || 'Unknown',
+            category: relatedRequest?.category || HelpRequestCategory.OTHER,
+            urgency: relatedRequest?.urgency || Urgency.MEDIUM,
+            status: (donationStatuses[donation.id] as DonorRequest['status']) || donation.status || 'pending',
+            donatedItems: donation.items || 'Various items',
+            donatedDate: donation.requestedDate || new Date().toISOString().split('T')[0],
+            contact: donation.donorContact,
+            contactType: donation.donorContactType,
+            shortNote: donation.message || '',
+          }
+        })
+      
+      setDonorRequests(userDonations)
     }
-    return dummyDonorRequests
-  })
+  }, [userInfo])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -204,6 +194,50 @@ export default function MyRequestsPage() {
       setActiveTab(tab as RequestType)
     }
   }, [tab])
+
+  // Reload donations when switching to donor tab
+  useEffect(() => {
+    if (activeTab === 'donor' && userInfo) {
+      const allDonations = JSON.parse(
+        localStorage.getItem('donations') || '[]'
+      )
+      const donationStatuses = JSON.parse(
+        localStorage.getItem('donation_statuses') || '{}'
+      )
+      
+      const userDonations = allDonations
+        .filter((donation: any) => 
+          donation.donorContact === userInfo.identifier ||
+          donation.donorName === userInfo.name ||
+          donation.donorName === userInfo.identifier
+        )
+        .map((donation: any) => {
+          const helpRequests = JSON.parse(
+            localStorage.getItem('help_requests') || '[]'
+          )
+          const relatedRequest = helpRequests.find((req: any) => req.id === donation.requestId)
+          
+          return {
+            id: donation.id,
+            requestId: donation.requestId || 0,
+            requestTitle: relatedRequest 
+              ? (relatedRequest.name || relatedRequest.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Request')
+              : `Request #${donation.requestId || 'Unknown'}`,
+            location: relatedRequest?.approxArea || 'Unknown',
+            category: relatedRequest?.category || HelpRequestCategory.OTHER,
+            urgency: relatedRequest?.urgency || Urgency.MEDIUM,
+            status: (donationStatuses[donation.id] as DonorRequest['status']) || donation.status || 'pending',
+            donatedItems: donation.items || 'Various items',
+            donatedDate: donation.requestedDate || new Date().toISOString().split('T')[0],
+            contact: donation.donorContact,
+            contactType: donation.donorContactType,
+            shortNote: donation.message || '',
+          }
+        })
+      
+      setDonorRequests(userDonations)
+    }
+  }, [activeTab, userInfo])
 
   const handleMarkAsCompleted = (donationId: number) => {
     const updatedRequests = donorRequests.map((request) =>
