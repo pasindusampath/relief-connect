@@ -31,7 +31,7 @@ type FormStep = 1 | 2 | 3
 interface FormData {
   name: string
   contactNumber: string
-  isIndividual: boolean
+  requestType: 'family' | 'camp'
   elders: number
   children: number
   pets: number
@@ -62,7 +62,7 @@ export default function EmergencyRequestForm({
   const [formData, setFormData] = useState<FormData>({
     name: '',
     contactNumber: '',
-    isIndividual: true,
+    requestType: 'family',
     elders: 0,
     children: 0,
     pets: 0,
@@ -135,7 +135,7 @@ export default function EmergencyRequestForm({
     setError(null)
 
     try {
-      const totalPeople = formData.elders + formData.children + (formData.isIndividual ? 1 : 0)
+      const totalPeople = formData.elders + formData.children + (formData.requestType === 'family' ? 1 : 0)
       const rationItemsList = Object.entries(formData.rationItems)
         .filter(([_, count]) => count > 0)
         .map(([id, count]) => {
@@ -225,113 +225,111 @@ export default function EmergencyRequestForm({
               </div>
 
               <div className="space-y-2">
-                <Label>Are you requesting for multiple people?</Label>
+                <Label>Request Type *</Label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
-                    variant={formData.isIndividual ? 'default' : 'outline'}
-                    onClick={() => setFormData({ ...formData, isIndividual: true })}
+                    variant={formData.requestType === 'family' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, requestType: 'family' })}
                     className="flex-1"
                   >
-                    Individual
+                    Family
                   </Button>
                   <Button
                     type="button"
-                    variant={!formData.isIndividual ? 'default' : 'outline'}
-                    onClick={() => setFormData({ ...formData, isIndividual: false })}
+                    variant={formData.requestType === 'camp' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, requestType: 'camp' })}
                     className="flex-1"
                   >
-                    Multiple People
+                    Camp
                   </Button>
                 </div>
               </div>
 
-              {!formData.isIndividual && (
-                <Card className="bg-gray-50">
-                  <CardContent className="pt-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-base font-medium">Elders</Label>
-                        <p className="text-sm text-gray-500">Adults (18+)</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setFormData({ ...formData, elders: Math.max(0, formData.elders - 1) })}
-                          disabled={formData.elders === 0}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="text-lg font-semibold w-8 text-center">{formData.elders}</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setFormData({ ...formData, elders: formData.elders + 1 })}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
+              <Card className="bg-gray-50">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-medium">Elders</Label>
+                      <p className="text-sm text-gray-500">Adults (18+)</p>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setFormData({ ...formData, elders: Math.max(0, formData.elders - 1) })}
+                        disabled={formData.elders === 0}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="text-lg font-semibold w-8 text-center">{formData.elders}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setFormData({ ...formData, elders: formData.elders + 1 })}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-base font-medium">Children</Label>
-                        <p className="text-sm text-gray-500">Under 18 years</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setFormData({ ...formData, children: Math.max(0, formData.children - 1) })}
-                          disabled={formData.children === 0}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="text-lg font-semibold w-8 text-center">{formData.children}</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setFormData({ ...formData, children: formData.children + 1 })}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-medium">Children</Label>
+                      <p className="text-sm text-gray-500">Under 18 years</p>
                     </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setFormData({ ...formData, children: Math.max(0, formData.children - 1) })}
+                        disabled={formData.children === 0}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="text-lg font-semibold w-8 text-center">{formData.children}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setFormData({ ...formData, children: formData.children + 1 })}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-base font-medium">Pets</Label>
-                        <p className="text-sm text-gray-500">Number of pets</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setFormData({ ...formData, pets: Math.max(0, formData.pets - 1) })}
-                          disabled={formData.pets === 0}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="text-lg font-semibold w-8 text-center">{formData.pets}</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => setFormData({ ...formData, pets: formData.pets + 1 })}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-medium">Pets</Label>
+                      <p className="text-sm text-gray-500">Number of pets</p>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setFormData({ ...formData, pets: Math.max(0, formData.pets - 1) })}
+                        disabled={formData.pets === 0}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="text-lg font-semibold w-8 text-center">{formData.pets}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setFormData({ ...formData, pets: formData.pets + 1 })}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               <div className="space-y-2">
                 <Label>GPS Current Location *</Label>
@@ -519,7 +517,7 @@ export default function EmergencyRequestForm({
 
   // Step 3: Confirmation & Success
   if (currentStep === 3) {
-    const totalPeople = formData.elders + formData.children + (formData.isIndividual ? 1 : 0)
+    const totalPeople = formData.elders + formData.children + (formData.requestType === 'family' ? 1 : 0)
     const selectedItems = Object.entries(formData.rationItems)
       .filter(([_, count]) => count > 0)
       .map(([id, count]) => {
@@ -558,11 +556,11 @@ export default function EmergencyRequestForm({
                     onClick={() => router.push('/')}
                     className="w-full"
                   >
-                    Go to your Request
+                    Go to Requests
                   </Button>
                   <Button
                     type="button"
-                    onClick={() => router.push('/help')}
+                    onClick={() => router.push('/')}
                     className="w-full"
                   >
                     See All Requests

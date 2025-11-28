@@ -33,6 +33,7 @@ import {
   Phone,
   Mail,
   LogOut,
+  ArrowRight,
 } from 'lucide-react'
 import { HelpRequestResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/help-request/response/help_request_response_dto'
 import { Urgency, HelpRequestCategory } from '@nx-mono-repo-deployment-test/shared/src/enums'
@@ -180,12 +181,23 @@ export default function LandingPage() {
     }
   }, [router.query])
 
-  // Load mock requests data
+  // Load requests from localStorage and combine with mock data
   useEffect(() => {
     const loadData = async () => {
       await new Promise((resolve) => setTimeout(resolve, 500))
       const mockData = generateMockData()
-      setHelpRequests(mockData)
+
+      // Load stored requests from localStorage
+      if (typeof window !== 'undefined') {
+        const storedRequests = JSON.parse(localStorage.getItem('help_requests') || '[]')
+        if (storedRequests.length > 0) {
+          setHelpRequests([...mockData, ...storedRequests])
+        } else {
+          setHelpRequests(mockData)
+        }
+      } else {
+        setHelpRequests(mockData)
+      }
     }
     loadData()
   }, [])
@@ -381,27 +393,17 @@ export default function LandingPage() {
   }
 
   const handleNeedHelp = () => {
-    setViewMode('need-help')
+    router.push('/need-help')
   }
 
   const handleCanHelp = () => {
-    handleViewRequests()
+    if (requestsSectionRef.current) {
+      requestsSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
   const handleViewMap = () => {
     router.push('/map')
-  }
-
-  const handleIndividual = () => {
-    router.push('/need-help')
-  }
-
-  const handleGroup = () => {
-    router.push('/camp')
-  }
-
-  const handleBack = () => {
-    setViewMode('initial')
   }
 
   // Show identifier prompt if not logged in
@@ -752,218 +754,133 @@ export default function LandingPage() {
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredRequests.map((request) => (
-                  <Card
-                    key={request.id}
-                    className="cursor-pointer transition-all hover:shadow-lg overflow-hidden border-2 hover:border-primary"
-                  >
-                    <div className="relative h-48 bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
-                      <div className="absolute inset-0 flex items-center justify-center opacity-30">
-                        <MapPin className="h-16 w-16 text-gray-400" />
-                      </div>
-                      <div className="absolute top-3 right-3">
-                        <div
-                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                            request.urgency === Urgency.HIGH
-                              ? 'bg-red-100 text-red-700'
-                              : request.urgency === Urgency.MEDIUM
-                                ? 'bg-orange-100 text-orange-700'
-                                : 'bg-green-100 text-green-700'
-                          }`}
-                        >
-                          {request.urgency || 'Medium'}
-                        </div>
-                      </div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2">
-                          <div className="font-semibold text-gray-900 text-sm">
-                            {request.approxArea || 'Unknown location'}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <CardContent className="p-5">
-                      <div className="space-y-3">
-                        <div>
-                          <div className="font-bold text-lg text-gray-900 mb-1">
-                            {request.shortNote?.split(',')[0]?.replace('Name:', '').trim() ||
-                              'Anonymous'}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {request.contactType}: {request.contact}
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Users className="h-4 w-4 text-blue-600" />
-                            <span className="font-medium">
-                              {request.shortNote?.match(/People:\s*(\d+)/)?.[1] || '1'} people
-                            </span>
-                            {request.shortNote?.match(/Kids:\s*(\d+)/)?.[1] && (
-                              <span className="text-gray-500">
-                                ({request.shortNote.match(/Kids:\s*(\d+)/)?.[1]} kids)
-                              </span>
-                            )}
-                            {request.shortNote?.match(/Elders:\s*(\d+)/)?.[1] && (
-                              <span className="text-gray-500">
-                                ({request.shortNote.match(/Elders:\s*(\d+)/)?.[1]} elders)
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <Package className="h-4 w-4 text-purple-600" />
-                            <span className="line-clamp-1">
-                              {request.shortNote?.match(/Items:\s*(.+)/)?.[1] || 'Various items'}
-                            </span>
-                          </div>
-                        </div>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              className="w-full mt-4"
-                              onClick={() => setSelectedRequest(request)}
-                            >
-                              See Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle className="text-2xl">
-                                {request.shortNote?.split(',')[0]?.replace('Name:', '').trim() ||
-                                  'Anonymous Request'}
-                              </DialogTitle>
-                              <DialogDescription>Request Details and Information</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 mt-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label className="text-sm font-semibold text-gray-600">
-                                    Location
-                                  </Label>
-                                  <p className="text-base">{request.approxArea || 'Unknown'}</p>
+                {filteredRequests.map((request) => {
+                  const name =
+                    request.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Anonymous'
+                  const peopleCount = request.shortNote?.match(/People:\s*(\d+)/)?.[1] || '1'
+                  const kidsCount = request.shortNote?.match(/Kids:\s*(\d+)/)?.[1] || '0'
+                  const eldersCount = request.shortNote?.match(/Elders:\s*(\d+)/)?.[1] || '0'
+                  const items = request.shortNote?.match(/Items:\s*(.+)/)?.[1] || 'Various items'
+                  const requestType = request.shortNote?.includes('Camp') ? 'Camp' : 'Family'
+
+                  return (
+                    <Card
+                      key={request.id}
+                      className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-[1.02] overflow-hidden border-2 hover:border-primary bg-white"
+                      onClick={() => router.push(`/request/${request.id}`)}
+                    >
+                      <CardContent className="p-6">
+                        <div className="space-y-4">
+                          {/* Header with name and urgency */}
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className="font-bold text-xl text-gray-900 group-hover:text-primary transition-colors">
+                                  {name}
                                 </div>
-                                <div>
-                                  <Label className="text-sm font-semibold text-gray-600">
-                                    Urgency
-                                  </Label>
-                                  <p className="text-base">{request.urgency || 'Medium'}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-semibold text-gray-600">
-                                    Category
-                                  </Label>
-                                  <p className="text-base">{request.category || 'General'}</p>
-                                </div>
-                                <div>
-                                  <Label className="text-sm font-semibold text-gray-600">
-                                    Contact Type
-                                  </Label>
-                                  <p className="text-base">{request.contactType || 'N/A'}</p>
-                                </div>
-                                <div className="col-span-2">
-                                  <Label className="text-sm font-semibold text-gray-600">
-                                    Contact
-                                  </Label>
-                                  <p className="text-base">{request.contact || 'N/A'}</p>
+                                <div
+                                  className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                    request.urgency === Urgency.HIGH
+                                      ? 'bg-red-100 text-red-700'
+                                      : request.urgency === Urgency.MEDIUM
+                                        ? 'bg-orange-100 text-orange-700'
+                                        : 'bg-green-100 text-green-700'
+                                  }`}
+                                >
+                                  {request.urgency || 'Medium'}
                                 </div>
                               </div>
-                              <div>
-                                <Label className="text-sm font-semibold text-gray-600">
-                                  Full Details
-                                </Label>
-                                <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                                  <p className="text-sm whitespace-pre-wrap">
-                                    {request.shortNote || 'No additional details provided.'}
-                                  </p>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <div className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+                                  {requestType}
                                 </div>
+                                <span>•</span>
+                                <span className="text-xs">{request.category || 'General'}</span>
                               </div>
-                              {request.lat && request.lng && (
-                                <div>
-                                  <Label className="text-sm font-semibold text-gray-600">
-                                    Coordinates
-                                  </Label>
-                                  <p className="text-sm text-gray-600">
-                                    Lat: {request.lat.toFixed(4)}, Lng: {request.lng.toFixed(4)}
-                                  </p>
-                                </div>
-                              )}
                             </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                          </div>
+
+                          {/* Location */}
+                          <div className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 rounded-lg px-3 py-2">
+                            <MapPin className="h-4 w-4 text-red-500 flex-shrink-0" />
+                            <span className="font-medium truncate">
+                              {request.approxArea || 'Unknown location'}
+                            </span>
+                          </div>
+
+                          {/* People Details */}
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-blue-50 rounded-lg p-3 text-center">
+                              <div className="flex items-center justify-center gap-1 mb-1">
+                                <Users className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <div className="text-lg font-bold text-blue-700">{peopleCount}</div>
+                              <div className="text-xs text-gray-600">People</div>
+                            </div>
+                            {parseInt(kidsCount) > 0 && (
+                              <div className="bg-purple-50 rounded-lg p-3 text-center">
+                                <div className="flex items-center justify-center gap-1 mb-1">
+                                  <Users className="h-4 w-4 text-purple-600" />
+                                </div>
+                                <div className="text-lg font-bold text-purple-700">{kidsCount}</div>
+                                <div className="text-xs text-gray-600">Kids</div>
+                              </div>
+                            )}
+                            {parseInt(eldersCount) > 0 && (
+                              <div className="bg-orange-50 rounded-lg p-3 text-center">
+                                <div className="flex items-center justify-center gap-1 mb-1">
+                                  <Users className="h-4 w-4 text-orange-600" />
+                                </div>
+                                <div className="text-lg font-bold text-orange-700">
+                                  {eldersCount}
+                                </div>
+                                <div className="text-xs text-gray-600">Elders</div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Items Needed */}
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-100">
+                            <div className="flex items-start gap-2">
+                              <Package className="h-4 w-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="text-xs font-semibold text-purple-700 mb-1">
+                                  Items Needed
+                                </div>
+                                <div className="text-sm text-gray-700 line-clamp-2">{items}</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Contact Info */}
+                          <div className="flex items-center gap-2 text-sm text-gray-600 pt-2 border-t border-gray-200">
+                            {request.contactType === 'Phone' ? (
+                              <Phone className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Mail className="h-4 w-4 text-blue-600" />
+                            )}
+                            <span className="font-medium">{request.contact}</span>
+                          </div>
+
+                          {/* Action Button */}
+                          <Button
+                            className="w-full mt-2 group-hover:bg-primary group-hover:text-white transition-all"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/request/${request.id}`)
+                            }}
+                          >
+                            View Details
+                            <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
               </div>
             )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Need Help view - Choose between Individual or Group
-  if (viewMode === 'need-help') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-        <div className="w-full max-w-4xl">
-          <div className="text-center mb-8">
-            <Button onClick={handleBack} variant="ghost" className="mb-4">
-              ← Back
-            </Button>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">I Need Help</h1>
-            <p className="text-lg md:text-xl text-gray-600">
-              Are you requesting help as an individual or as a group?
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Individual Card */}
-            <Card className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 hover:border-primary">
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                  <User className="w-8 h-8 text-blue-600" />
-                </div>
-                <CardTitle className="text-2xl font-bold text-gray-900">
-                  I'm an Individual
-                </CardTitle>
-                <CardDescription className="text-base mt-2">
-                  Request help for yourself or your family
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={handleIndividual}
-                  className="w-full h-12 text-base font-semibold"
-                  size="lg"
-                >
-                  Continue as Individual
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Group/Camp Card */}
-            <Card className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105 border-2 hover:border-primary">
-              <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Users className="w-8 h-8 text-purple-600" />
-                </div>
-                <CardTitle className="text-2xl font-bold text-gray-900">We're a Group</CardTitle>
-                <CardDescription className="text-base mt-2">
-                  Register your camp or group and share your needs
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={handleGroup}
-                  variant="secondary"
-                  className="w-full h-12 text-base font-semibold"
-                  size="lg"
-                >
-                  Continue as Group
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
