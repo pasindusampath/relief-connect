@@ -1,10 +1,18 @@
 import 'reflect-metadata'; // Required for decorators - MUST BE FIRST!
-// Note: Environment variables are loaded in config/database.ts
-// This ensures they're loaded before any database configuration
+// Load environment variables and config (must be imported first)
+import { appConfig, validateConfig } from './config';
 import Server from './server';
 
-// Get port from environment or use default
-const port = parseInt(process.env.PORT || '3000', 10);
+// Validate configuration
+try {
+  validateConfig();
+} catch (error) {
+  console.error('Configuration validation failed:', error);
+  process.exit(1);
+}
+
+// Get port from config
+const port = appConfig.server.port;
 
 // Get server instance
 const server = Server.getInstance();

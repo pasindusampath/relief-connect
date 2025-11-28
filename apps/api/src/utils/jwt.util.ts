@@ -1,14 +1,25 @@
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt, { SignOptions, JwtPayload } from 'jsonwebtoken';
 import { IUser } from '@nx-mono-repo-deployment-test/shared/src/interfaces/user/IUser';
+import { appConfig } from '../config';
+
+/**
+ * JWT token payload interface
+ */
+interface TokenPayload extends JwtPayload {
+  id?: number;
+  username?: string;
+  role?: string;
+  type: 'access' | 'refresh';
+}
 
 /**
  * JWT utility for token generation and verification
  */
 class JwtUtil {
-  private static readonly SECRET_KEY: string = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
-  private static readonly ACCESS_TOKEN_EXPIRES_IN: string = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '15m';
-  private static readonly REFRESH_TOKEN_EXPIRES_IN: string = process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '7d';
-  private static readonly REFRESH_TOKEN_SECRET: string = process.env.JWT_REFRESH_SECRET || (JwtUtil.SECRET_KEY + '-refresh');
+  private static readonly SECRET_KEY: string = appConfig.jwt.secret;
+  private static readonly ACCESS_TOKEN_EXPIRES_IN: string = appConfig.jwt.accessTokenExpiresIn;
+  private static readonly REFRESH_TOKEN_EXPIRES_IN: string = appConfig.jwt.refreshTokenExpiresIn;
+  private static readonly REFRESH_TOKEN_SECRET: string = appConfig.jwt.refreshSecret;
 
   /**
    * Generate access token for user (short-lived)
@@ -23,11 +34,9 @@ class JwtUtil {
       type: 'access',
     };
 
-    const options: SignOptions = {
+    return jwt.sign(payload, this.SECRET_KEY, {
       expiresIn: this.ACCESS_TOKEN_EXPIRES_IN,
-    };
-
-    return jwt.sign(payload, this.SECRET_KEY, options);
+    } as SignOptions);
   }
 
   /**
@@ -43,11 +52,9 @@ class JwtUtil {
       type: 'refresh',
     };
 
-    const options: SignOptions = {
+    return jwt.sign(payload, this.REFRESH_TOKEN_SECRET, {
       expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
-    };
-
-    return jwt.sign(payload, this.REFRESH_TOKEN_SECRET, options);
+    } as SignOptions);
   }
 
   /**
@@ -55,9 +62,9 @@ class JwtUtil {
    * @param token - JWT access token string
    * @returns Decoded token payload or null if invalid
    */
-  public static verifyAccessToken(token: string): any {
+  public static verifyAccessToken(token: string): TokenPayload | null {
     try {
-      const decoded = jwt.verify(token, this.SECRET_KEY) as any;
+      const decoded = jwt.verify(token, this.SECRET_KEY) as TokenPayload;
       if (decoded.type !== 'access') {
         return null;
       }
@@ -72,9 +79,9 @@ class JwtUtil {
    * @param token - JWT refresh token string
    * @returns Decoded token payload or null if invalid
    */
-  public static verifyRefreshToken(token: string): any {
+  public static verifyRefreshToken(token: string): TokenPayload | null {
     try {
-      const decoded = jwt.verify(token, this.REFRESH_TOKEN_SECRET) as any;
+      const decoded = jwt.verify(token, this.REFRESH_TOKEN_SECRET) as TokenPayload;
       if (decoded.type !== 'refresh') {
         return null;
       }
@@ -89,9 +96,10 @@ class JwtUtil {
    * @param token - JWT token string
    * @returns Decoded token payload or null
    */
-  public static decodeToken(token: string): any {
+  public static decodeToken(token: string): TokenPayload | null {
     try {
-      return jwt.decode(token);
+      const decoded = jwt.decode(token);
+      return decoded as TokenPayload | null;
     } catch (error) {
       return null;
     }
