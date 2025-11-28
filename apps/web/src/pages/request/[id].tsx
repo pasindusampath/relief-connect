@@ -25,7 +25,8 @@ import {
   CheckCircle,
 } from 'lucide-react'
 import { HelpRequestResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/help-request/response/help_request_response_dto'
-import { Urgency, ContactType } from '@nx-mono-repo-deployment-test/shared/src/enums'
+import { Urgency, HelpRequestCategory, ContactType } from '@nx-mono-repo-deployment-test/shared/src/enums'
+import { helpRequestService } from '../../services'
 
 interface DonationRequest {
   id: number
@@ -38,39 +39,7 @@ interface DonationRequest {
   message?: string
 }
 
-// Dummy donation requests (people who want to donate to this request)
-const dummyDonationRequests: DonationRequest[] = [
-  {
-    id: 1,
-    donorName: 'Sarah Johnson',
-    donorContact: '+94771234567',
-    donorContactType: 'Phone',
-    items: 'Food & Water (5), Rice (10kg), Canned Goods (12)',
-    status: 'pending',
-    requestedDate: '2024-01-20',
-    message: 'I can provide food supplies within 2 hours.',
-  },
-  {
-    id: 2,
-    donorName: 'Michael Chen',
-    donorContact: 'michael@example.com',
-    donorContactType: 'Email',
-    items: 'Medicine (3), First Aid Kit (2), Blankets (5)',
-    status: 'confirmed',
-    requestedDate: '2024-01-19',
-    message: 'Available for delivery tomorrow morning.',
-  },
-  {
-    id: 3,
-    donorName: 'Priya Silva',
-    donorContact: '+94771234568',
-    donorContactType: 'Phone',
-    items: 'Tents (2), Sleeping Bags (4)',
-    status: 'pending',
-    requestedDate: '2024-01-21',
-    message: 'Can deliver to your location.',
-  },
-]
+// Donation requests are now loaded from localStorage
 
 // Dummy photos
 const dummyPhotos = [
@@ -84,21 +53,38 @@ export default function RequestDetailsPage() {
   const { id } = router.query
   const [request, setRequest] = useState<HelpRequestResponseDto | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
   const [userInfo, setUserInfo] = useState<{ name?: string; identifier?: string } | null>(null)
-  const [donationRequests, setDonationRequests] = useState<DonationRequest[]>(() => {
-    // Load donation statuses from localStorage
-    if (typeof window !== 'undefined') {
+  const [donationRequests, setDonationRequests] = useState<DonationRequest[]>([])
+
+  // Load donations from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && id) {
+      const allDonations = JSON.parse(
+        localStorage.getItem('donations') || '[]'
+      )
       const donationStatuses = JSON.parse(
         localStorage.getItem('donation_statuses') || '{}'
       )
-      return dummyDonationRequests.map((donation) => ({
-        ...donation,
-        status: (donationStatuses[donation.id] as DonationRequest['status']) || donation.status,
-      }))
+      
+      // Filter donations for this request ID
+      const requestDonations = allDonations
+        .filter((donation: any) => donation.requestId === Number(id))
+        .map((donation: any) => ({
+          id: donation.id,
+          donorName: donation.donorName,
+          donorContact: donation.donorContact,
+          donorContactType: donation.donorContactType,
+          items: donation.items,
+          status: (donationStatuses[donation.id] as DonationRequest['status']) || donation.status || 'pending',
+          requestedDate: donation.requestedDate,
+          message: donation.message,
+        }))
+      
+      setDonationRequests(requestDonations)
     }
-    return dummyDonationRequests
-  })
+  }, [id])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -121,24 +107,29 @@ export default function RequestDetailsPage() {
 
   useEffect(() => {
     if (id) {
-      // Simulate loading request data
-      setTimeout(() => {
-        // Generate mock request data
-        const mockRequest: HelpRequestResponseDto = {
-          id: Number(id),
-          lat: 6.9271,
-          lng: 79.8612,
-          urgency: Urgency.HIGH,
-          shortNote:
-            'Name: John Doe, People: 5, Kids: 2, Elders: 2. Items: Food & Water (3), Torch (2), Medicine (1)',
-          approxArea: 'Colombo',
-          contact: '+94771234567',
-          contactType: ContactType.PHONE,
-          createdAt: new Date('2024-01-15T10:00:00Z'),
+      const loadRequest = async () => {
+        setLoading(true)
+        try {
+          // Fetch all requests and find the one with matching ID
+          const response = await helpRequestService.getAllHelpRequests()
+          if (response.success && response.data) {
+            const foundRequest = response.data.find((req) => req.id === Number(id))
+            if (foundRequest) {
+              setRequest(foundRequest)
+            } else {
+              setError('Request not found')
+            }
+          } else {
+            setError(response.error || 'Failed to load request')
+          }
+        } catch (err) {
+          console.error('[RequestPage] Error loading request:', err)
+          setError(err instanceof Error ? err.message : 'Failed to load request')
+        } finally {
+          setLoading(false)
         }
-        setRequest(mockRequest)
-        setLoading(false)
-      }, 500)
+      }
+      loadRequest()
     }
   }, [id])
 
@@ -340,10 +331,10 @@ export default function RequestDetailsPage() {
               </div>
 
               {/* Coordinates */}
-              {request.lat && request.lng && (
+              {request.lat != null && request.lng != null && (
                 <div className="text-sm text-gray-600">
                   <span className="font-semibold">Coordinates:</span> Lat:{' '}
-                  {request.lat.toFixed(4)}, Lng: {request.lng.toFixed(4)}
+                  {Number(request.lat).toFixed(4)}, Lng: {Number(request.lng).toFixed(4)}
                 </div>
               )}
             </CardContent>
@@ -370,7 +361,7 @@ export default function RequestDetailsPage() {
               <DialogTrigger asChild>
                 <Button className="flex-1 h-12 text-base font-semibold" variant="outline">
                   <Users className="h-5 w-5 mr-2" />
-                  View Donation Requests ({dummyDonationRequests.length})
+                  View Donation Requests ({donationRequests.length})
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -381,13 +372,13 @@ export default function RequestDetailsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
-                  {dummyDonationRequests.length === 0 ? (
+                  {donationRequests.length === 0 ? (
                     <div className="text-center py-8">
                       <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                       <p className="text-gray-600">No donation requests yet</p>
                     </div>
                   ) : (
-                    dummyDonationRequests.map((donation) => (
+                    donationRequests.map((donation) => (
                       <Card key={donation.id} className="border-2">
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between mb-3">

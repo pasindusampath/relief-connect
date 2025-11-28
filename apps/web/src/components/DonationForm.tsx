@@ -72,17 +72,49 @@ export default function DonationForm({
   }
 
   const handleMakeDonation = () => {
-    // Here you would submit the donation with donor details
-    const donationData = {
-      requestId,
-      donorName,
-      donorContact,
-      donorContactType,
-      items: donations.filter((d) => d.quantity > 0),
-      message,
+    if (typeof window === 'undefined') return
+    
+    // Get user info from localStorage
+    const donorUser = localStorage.getItem('donor_user')
+    let userIdentifier = donorName || 'Anonymous'
+    
+    if (donorUser) {
+      try {
+        const user = JSON.parse(donorUser)
+        if (user.name || user.identifier) {
+          userIdentifier = user.name || user.identifier
+        }
+      } catch (e) {
+        // Use donorName as fallback
+      }
     }
-    console.log('Donation submitted:', donationData)
-    // In a real app, you would make an API call here
+
+    // Create donation data
+    const donationData = {
+      id: Date.now(), // Generate unique ID
+      requestId: requestId ? Number(requestId) : null,
+      donorName: donorName || userIdentifier,
+      donorContact: donorContact || (donorUser ? JSON.parse(donorUser).identifier : ''),
+      donorContactType: donorContactType,
+      items: donations
+        .filter((d) => d.quantity > 0)
+        .map((d) => `${d.name} (${d.quantity})`)
+        .join(', '),
+      message,
+      status: 'pending' as const,
+      requestedDate: new Date().toISOString().split('T')[0],
+    }
+    
+    console.log('[DonationForm] Saving donation:', donationData)
+    
+    // Save to localStorage
+    const existingDonations = JSON.parse(
+      localStorage.getItem('donations') || '[]'
+    )
+    existingDonations.push(donationData)
+    localStorage.setItem('donations', JSON.stringify(existingDonations))
+    
+    console.log('[DonationForm] Donation saved successfully')
     setShowSuccess(true)
   }
 

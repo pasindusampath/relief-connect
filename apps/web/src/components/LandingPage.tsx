@@ -43,80 +43,11 @@ import {
   SRI_LANKA_PROVINCES,
   SRI_LANKA_DISTRICTS,
   DISTRICT_COORDINATES,
-  getMockCoordinates,
 } from '../data/sri-lanka-locations'
 import apiClient from '../services/api-client'
+import { helpRequestService } from '../services'
 
 type ViewMode = 'initial' | 'need-help' | 'can-help'
-
-// Generate mock data for analytics
-const generateMockData = (): HelpRequestResponseDto[] => {
-  return [
-    {
-      id: 1,
-      lat: 6.9271,
-      lng: 79.8612,
-      urgency: Urgency.HIGH,
-      shortNote:
-        'Name: John Doe, People: 5, Kids: 2, Elders: 2. Items: Food & Water (3), Torch (2)',
-      approxArea: 'Colombo',
-      contactType: 'Phone' as any,
-      contact: '0771234567',
-    },
-    {
-      id: 2,
-      lat: 7.2906,
-      lng: 80.6337,
-      urgency: Urgency.MEDIUM,
-      shortNote: 'Name: Jane Smith, People: 3. Items: Canned Foods (5), Noodles (10)',
-      approxArea: 'Kandy',
-      contactType: 'Phone' as any,
-      contact: '0777654321',
-    },
-    {
-      id: 3,
-      lat: 6.0329,
-      lng: 80.217,
-      urgency: Urgency.HIGH,
-      shortNote:
-        'Name: Kamal Perera, People: 8, Kids: 3, Elders: 3. Items: Food & Water (5), Candle (4), Matches (2)',
-      approxArea: 'Galle',
-      contactType: 'Phone' as any,
-      contact: '0772345678',
-    },
-    {
-      id: 4,
-      lat: 7.4675,
-      lng: 80.6234,
-      urgency: Urgency.LOW,
-      shortNote: 'Name: Nimal Fernando, People: 2. Items: Tissues (3), Diary (1)',
-      approxArea: 'Matale',
-      contactType: 'WhatsApp' as any,
-      contact: '0773456789',
-    },
-    {
-      id: 5,
-      lat: 5.9549,
-      lng: 80.555,
-      urgency: Urgency.MEDIUM,
-      shortNote: 'Name: Sunil Silva, People: 4, Kids: 1. Items: Food & Water (2), Noodles (8)',
-      approxArea: 'Matara',
-      contactType: 'Phone' as any,
-      contact: '0774567890',
-    },
-    {
-      id: 6,
-      lat: 6.5854,
-      lng: 79.9607,
-      urgency: Urgency.HIGH,
-      shortNote:
-        'Name: Priya Wickramasinghe, People: 6, Kids: 2, Elders: 2. Items: Torch (3), Candle (5), Matches (3)',
-      approxArea: 'Kalutara',
-      contactType: 'Phone' as any,
-      contact: '0775678901',
-    },
-  ]
-}
 
 export default function LandingPage() {
   const router = useRouter()
@@ -175,37 +106,29 @@ export default function LandingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router.query])
 
-  // Load requests from localStorage and combine with mock data
+  // Load requests from API
   useEffect(() => {
     const loadData = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      const mockData = generateMockData()
-
-      // Load stored requests from localStorage
-      if (typeof window !== 'undefined') {
-        const storedRequests = JSON.parse(localStorage.getItem('help_requests') || '[]')
-        if (storedRequests.length > 0) {
-          setHelpRequests([...mockData, ...storedRequests])
+      try {
+        const response = await helpRequestService.getAllHelpRequests()
+        if (response.success && response.data) {
+          setHelpRequests(response.data)
         } else {
-          setHelpRequests(mockData)
+          console.error('[LandingPage] Failed to load help requests:', response.error)
+          setHelpRequests([])
         }
-      } else {
-        setHelpRequests(mockData)
+      } catch (error) {
+        console.error('[LandingPage] Error loading help requests:', error)
+        setHelpRequests([])
       }
     }
     loadData()
   }, [])
 
-  // Add mock coordinates to requests
+  // Use requests as-is (coordinates should come from API)
   const requestsWithMockCoords = useMemo(() => {
-    return helpRequests.map((request) => {
-      if (!request.lat || !request.lng || request.lat === 0 || request.lng === 0) {
-        const [lat, lng] = getMockCoordinates(appliedFilters.district)
-        return { ...request, lat, lng }
-      }
-      return request
-    })
-  }, [helpRequests, appliedFilters.district])
+    return helpRequests
+  }, [helpRequests])
 
   const handleIdentifierSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -350,16 +273,23 @@ export default function LandingPage() {
     router.push('/my-requests')
   }
 
-  // Calculate analytics from mock data
+  // Calculate analytics from actual data
   const analytics = useMemo(() => {
-    const mockRequests = generateMockData()
-    const totalRequests = mockRequests.length
-    const totalPeople = mockRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/People:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 1)
+    const totalRequests = helpRequests.length
+    const totalPeople = helpRequests.reduce((sum, req) => {
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.totalPeople || (() => {
+        const match = req.shortNote?.match(/People:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 1
+      })())
     }, 0)
 
-    const totalRations = mockRequests.reduce((sum, req) => {
+    const totalRations = helpRequests.reduce((sum, req) => {
+      // Use rationItems array if available
+      if (req.rationItems && req.rationItems.length > 0) {
+        return sum + req.rationItems.length
+      }
+      // Fallback to parsing shortNote
       const itemsMatch = req.shortNote?.match(/Items:\s*(.+)/)
       if (itemsMatch) {
         const items = itemsMatch[1]
@@ -377,7 +307,7 @@ export default function LandingPage() {
       totalRations,
       donationsDone,
     }
-  }, [])
+  }, [helpRequests])
 
   const filteredRequests = useMemo(() => {
     let filtered = requestsWithMockCoords
@@ -413,13 +343,19 @@ export default function LandingPage() {
 
     if (appliedFilters.type === 'individual') {
       filtered = filtered.filter((request) => {
-        const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
-        return peopleMatch && parseInt(peopleMatch[1]) <= 10
+        const peopleCount = request.totalPeople || (() => {
+          const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
+          return peopleMatch ? parseInt(peopleMatch[1]) : 1
+        })()
+        return peopleCount <= 10
       })
     } else if (appliedFilters.type === 'group') {
       filtered = filtered.filter((request) => {
-        const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
-        return peopleMatch && parseInt(peopleMatch[1]) > 10
+        const peopleCount = request.totalPeople || (() => {
+          const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
+          return peopleMatch ? parseInt(peopleMatch[1]) : 1
+        })()
+        return peopleCount > 10
       })
     }
 
@@ -430,18 +366,27 @@ export default function LandingPage() {
   const requestsAnalytics = useMemo(() => {
     const totalRequests = filteredRequests.length
     const totalPeople = filteredRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/People:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 1)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.totalPeople || (() => {
+        const match = req.shortNote?.match(/People:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 1
+      })())
     }, 0)
 
     const totalKids = filteredRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/Kids:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 0)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.children || (() => {
+        const match = req.shortNote?.match(/Kids:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 0
+      })())
     }, 0)
 
     const totalElders = filteredRequests.reduce((sum, req) => {
-      const match = req.shortNote?.match(/Elders:\s*(\d+)/)
-      return sum + (match ? parseInt(match[1]) : 0)
+      // Use real API field first, fallback to parsing shortNote
+      return sum + (req.elders || (() => {
+        const match = req.shortNote?.match(/Elders:\s*(\d+)/)
+        return match ? parseInt(match[1]) : 0
+      })())
     }, 0)
 
     const daysOfSupply = 7
@@ -863,12 +808,15 @@ export default function LandingPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredRequests.map((request) => {
-                  const name =
-                    request.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Anonymous'
-                  const peopleCount = request.shortNote?.match(/People:\s*(\d+)/)?.[1] || '1'
-                  const kidsCount = request.shortNote?.match(/Kids:\s*(\d+)/)?.[1] || '0'
-                  const eldersCount = request.shortNote?.match(/Elders:\s*(\d+)/)?.[1] || '0'
-                  const items = request.shortNote?.match(/Items:\s*(.+)/)?.[1] || 'Various items'
+                  // Use real data from API response fields
+                  const name = request.name || request.shortNote?.split(',')[0]?.replace('Name:', '').trim() || 'Anonymous'
+                  const peopleCount = request.totalPeople || request.shortNote?.match(/People:\s*(\d+)/)?.[1] || '1'
+                  const kidsCount = request.children || request.shortNote?.match(/Kids:\s*(\d+)/)?.[1] || '0'
+                  const eldersCount = request.elders || request.shortNote?.match(/Elders:\s*(\d+)/)?.[1] || '0'
+                  // Use rationItems if available, otherwise parse from shortNote
+                  const items = request.rationItems && request.rationItems.length > 0
+                    ? request.rationItems.join(', ')
+                    : request.shortNote?.match(/Items:\s*(.+)/)?.[1] || 'Various items'
                   const requestType = request.shortNote?.includes('Camp') ? 'Camp' : 'Family'
 
                   return (
@@ -912,6 +860,11 @@ export default function LandingPage() {
                             <span className="font-medium truncate">
                               {request.approxArea || 'Unknown location'}
                             </span>
+                            {request.lat != null && request.lng != null && (
+                              <span className="text-xs text-gray-500 ml-auto">
+                                {Number(request.lat).toFixed(6)}, {Number(request.lng).toFixed(6)}
+                              </span>
+                            )}
                           </div>
 
                           {/* People Details */}
@@ -923,7 +876,7 @@ export default function LandingPage() {
                               <div className="text-lg font-bold text-blue-700">{peopleCount}</div>
                               <div className="text-xs text-gray-600">People</div>
                             </div>
-                            {parseInt(kidsCount) > 0 && (
+                            {Number(kidsCount) > 0 && (
                               <div className="bg-purple-50 rounded-lg p-3 text-center">
                                 <div className="flex items-center justify-center gap-1 mb-1">
                                   <Users className="h-4 w-4 text-purple-600" />
@@ -932,7 +885,7 @@ export default function LandingPage() {
                                 <div className="text-xs text-gray-600">Kids</div>
                               </div>
                             )}
-                            {parseInt(eldersCount) > 0 && (
+                            {Number(eldersCount) > 0 && (
                               <div className="bg-orange-50 rounded-lg p-3 text-center">
                                 <div className="flex items-center justify-center gap-1 mb-1">
                                   <Users className="h-4 w-4 text-orange-600" />
