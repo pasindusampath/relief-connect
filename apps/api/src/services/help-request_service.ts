@@ -123,6 +123,11 @@ class HelpRequestService {
         approxArea: createHelpRequestDto.approxArea.trim(),
         contactType: createHelpRequestDto.contactType,
         contact: createHelpRequestDto.contact?.trim(),
+        name: createHelpRequestDto.name?.trim(),
+        totalPeople: createHelpRequestDto.totalPeople,
+        elders: createHelpRequestDto.elders,
+        children: createHelpRequestDto.children,
+        pets: createHelpRequestDto.pets,
       });
 
       const helpRequest = await this.helpRequestDao.create(trimmedDto, userId);

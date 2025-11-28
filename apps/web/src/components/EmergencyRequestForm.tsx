@@ -176,10 +176,17 @@ export default function EmergencyRequestForm({
         urgency: formData.urgent ? Urgency.HIGH : Urgency.MEDIUM,
         shortNote:
           formData.notes ||
-          `Name: ${formData.name}, People: ${totalPeople}${formData.children > 0 ? `, Kids: ${formData.children}` : ''}${formData.elders > 0 ? `, Elders: ${formData.elders}` : ''}${formData.pets > 0 ? `, Pets: ${formData.pets}` : ''}. Items: ${rationItemsList}${specialNeedsText}`,
+          `Items: ${rationItemsList}${specialNeedsText}`.trim() ||
+          'Help request',
         approxArea: `${formData.gpsLocation.lat}, ${formData.gpsLocation.lng}`,
         contactType: ContactType.PHONE,
         contact: formData.contactNumber,
+        // Team/People data as separate fields
+        name: formData.name || undefined,
+        totalPeople: totalPeople || undefined,
+        elders: formData.elders > 0 ? formData.elders : undefined,
+        children: formData.children > 0 ? formData.children : undefined,
+        pets: formData.pets > 0 ? formData.pets : undefined,
       }
 
       const response = await onSubmit(helpRequestData)
