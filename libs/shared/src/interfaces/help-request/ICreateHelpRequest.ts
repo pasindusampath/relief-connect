@@ -13,5 +13,11 @@ export interface ICreateHelpRequest {
   approxArea: string;
   contactType: ContactType;
   contact?: string;
+  // Team/People data
+  name?: string; // Name of the requester
+  totalPeople?: number; // Total number of people
+  elders?: number; // Number of elders/adults
+  children?: number; // Number of children
+  pets?: number; // Number of pets
 }
 

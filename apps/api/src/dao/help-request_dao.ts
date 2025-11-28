@@ -87,6 +87,11 @@ class HelpRequestDao {
         [HelpRequestModel.HELP_REQUEST_APPROX_AREA]: createHelpRequestDto.approxArea,
         [HelpRequestModel.HELP_REQUEST_CONTACT_TYPE]: createHelpRequestDto.contactType,
         [HelpRequestModel.HELP_REQUEST_CONTACT]: createHelpRequestDto.contact,
+        [HelpRequestModel.HELP_REQUEST_NAME]: createHelpRequestDto.name,
+        [HelpRequestModel.HELP_REQUEST_TOTAL_PEOPLE]: createHelpRequestDto.totalPeople,
+        [HelpRequestModel.HELP_REQUEST_ELDERS]: createHelpRequestDto.elders,
+        [HelpRequestModel.HELP_REQUEST_CHILDREN]: createHelpRequestDto.children,
+        [HelpRequestModel.HELP_REQUEST_PETS]: createHelpRequestDto.pets,
         [HelpRequestModel.HELP_REQUEST_STATUS]: HelpRequestStatus.OPEN,
       });
       return helpRequest.toJSON() as IHelpRequest;

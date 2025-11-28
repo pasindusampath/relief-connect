@@ -6,6 +6,7 @@ import { HelpRequestStatus, HelpRequestCategory, Urgency, ContactType } from '..
  */
 export class HelpRequestResponseDto implements IHelpRequest {
   id: number;
+  userId?: number;
   lat: number;
   lng: number;
   category: HelpRequestCategory;
@@ -14,12 +15,18 @@ export class HelpRequestResponseDto implements IHelpRequest {
   approxArea: string;
   contactType: ContactType;
   contact?: string;
+  name?: string;
+  totalPeople?: number;
+  elders?: number;
+  children?: number;
+  pets?: number;
   status?: HelpRequestStatus;
   createdAt?: Date;
   updatedAt?: Date;
 
   constructor(helpRequest: IHelpRequest) {
     this.id = helpRequest.id!;
+    this.userId = helpRequest.userId;
     this.lat = helpRequest.lat;
     this.lng = helpRequest.lng;
     this.category = helpRequest.category;
@@ -28,6 +35,11 @@ export class HelpRequestResponseDto implements IHelpRequest {
     this.approxArea = helpRequest.approxArea;
     this.contactType = helpRequest.contactType;
     this.contact = helpRequest.contact;
+    this.name = helpRequest.name;
+    this.totalPeople = helpRequest.totalPeople;
+    this.elders = helpRequest.elders;
+    this.children = helpRequest.children;
+    this.pets = helpRequest.pets;
     this.status = helpRequest.status || HelpRequestStatus.OPEN;
     this.createdAt = helpRequest.createdAt;
     this.updatedAt = helpRequest.updatedAt;

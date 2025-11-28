@@ -20,6 +20,11 @@ export default class HelpRequestModel extends Model<IHelpRequest> implements IHe
   public static readonly HELP_REQUEST_APPROX_AREA = 'approxArea';
   public static readonly HELP_REQUEST_CONTACT_TYPE = 'contactType';
   public static readonly HELP_REQUEST_CONTACT = 'contact';
+  public static readonly HELP_REQUEST_NAME = 'name';
+  public static readonly HELP_REQUEST_TOTAL_PEOPLE = 'totalPeople';
+  public static readonly HELP_REQUEST_ELDERS = 'elders';
+  public static readonly HELP_REQUEST_CHILDREN = 'children';
+  public static readonly HELP_REQUEST_PETS = 'pets';
   public static readonly HELP_REQUEST_STATUS = 'status';
   public static readonly HELP_REQUEST_CREATED_AT = 'createdAt';
   public static readonly HELP_REQUEST_UPDATED_AT = 'updatedAt';
@@ -104,6 +109,41 @@ export default class HelpRequestModel extends Model<IHelpRequest> implements IHe
     field: HelpRequestModel.HELP_REQUEST_CONTACT,
   })
   contact?: string;
+
+  @Column({
+    type: DataType.STRING(100),
+    allowNull: true,
+    field: HelpRequestModel.HELP_REQUEST_NAME,
+  })
+  name?: string;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: HelpRequestModel.HELP_REQUEST_TOTAL_PEOPLE,
+  })
+  totalPeople?: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: HelpRequestModel.HELP_REQUEST_ELDERS,
+  })
+  elders?: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: HelpRequestModel.HELP_REQUEST_CHILDREN,
+  })
+  children?: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: true,
+    field: HelpRequestModel.HELP_REQUEST_PETS,
+  })
+  pets?: number;
 
   @Column({
     type: DataType.STRING(20),

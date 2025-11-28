@@ -47,6 +47,31 @@ export class CreateHelpRequestDto extends BaseDto implements IBodyDto, ICreateHe
   @Length(0, 50, { message: 'Contact must not exceed 50 characters' })
   contact?: string;
 
+  @IsString({ message: 'Name must be a string' })
+  @IsOptional()
+  @Length(0, 100, { message: 'Name must not exceed 100 characters' })
+  name?: string;
+
+  @IsNumber({}, { message: 'Total people must be a number' })
+  @IsOptional()
+  @Min(0, { message: 'Total people must be 0 or greater' })
+  totalPeople?: number;
+
+  @IsNumber({}, { message: 'Elders must be a number' })
+  @IsOptional()
+  @Min(0, { message: 'Elders must be 0 or greater' })
+  elders?: number;
+
+  @IsNumber({}, { message: 'Children must be a number' })
+  @IsOptional()
+  @Min(0, { message: 'Children must be 0 or greater' })
+  children?: number;
+
+  @IsNumber({}, { message: 'Pets must be a number' })
+  @IsOptional()
+  @Min(0, { message: 'Pets must be 0 or greater' })
+  pets?: number;
+
   constructor(data?: Partial<ICreateHelpRequest>) {
     super();
     if (data) {
@@ -58,6 +83,11 @@ export class CreateHelpRequestDto extends BaseDto implements IBodyDto, ICreateHe
       this.approxArea = data.approxArea || '';
       this.contactType = data.contactType!;
       this.contact = data.contact;
+      this.name = data.name;
+      this.totalPeople = data.totalPeople;
+      this.elders = data.elders;
+      this.children = data.children;
+      this.pets = data.pets;
     }
   }
 }
