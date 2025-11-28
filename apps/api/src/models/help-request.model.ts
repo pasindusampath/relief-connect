@@ -1,6 +1,6 @@
 import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
 import { IHelpRequest } from '@nx-mono-repo-deployment-test/shared/src/interfaces/help-request/IHelpRequest';
-import { HelpRequestStatus } from '@nx-mono-repo-deployment-test/shared/src/enums';
+import { HelpRequestStatus, HelpRequestCategory, Urgency, ContactType } from '@nx-mono-repo-deployment-test/shared/src/enums';
 
 @Table({
   tableName: HelpRequestModel.TABLE_NAME,
@@ -52,14 +52,14 @@ export default class HelpRequestModel extends Model<IHelpRequest> implements IHe
     allowNull: false,
     field: HelpRequestModel.HELP_REQUEST_CATEGORY,
   })
-  category!: string;
+  category!: HelpRequestCategory;
 
   @Column({
     type: DataType.STRING(20),
     allowNull: false,
     field: HelpRequestModel.HELP_REQUEST_URGENCY,
   })
-  urgency!: string;
+  urgency!: Urgency;
 
   @Column({
     type: DataType.STRING(160),
@@ -83,7 +83,7 @@ export default class HelpRequestModel extends Model<IHelpRequest> implements IHe
     allowNull: false,
     field: HelpRequestModel.HELP_REQUEST_CONTACT_TYPE,
   })
-  contactType!: string;
+  contactType!: ContactType;
 
   @Column({
     type: DataType.STRING(50),

@@ -1,5 +1,6 @@
 import { Table, Column, Model, DataType, CreatedAt, UpdatedAt, PrimaryKey, AutoIncrement } from 'sequelize-typescript';
 import { ICamp } from '@nx-mono-repo-deployment-test/shared/src/interfaces/camp/ICamp';
+import { CampType, PeopleRange, CampNeed, ContactType } from '@nx-mono-repo-deployment-test/shared/src/enums';
 
 @Table({
   tableName: CampModel.TABLE_NAME,
@@ -51,7 +52,7 @@ export default class CampModel extends Model<ICamp> implements ICamp {
     allowNull: false,
     field: CampModel.CAMP_TYPE,
   })
-  campType!: string;
+  campType!: CampType;
 
   @Column({
     type: DataType.STRING(255),
@@ -68,14 +69,14 @@ export default class CampModel extends Model<ICamp> implements ICamp {
     allowNull: false,
     field: CampModel.CAMP_PEOPLE_RANGE,
   })
-  peopleRange!: string;
+  peopleRange!: PeopleRange;
 
   @Column({
     type: DataType.ARRAY(DataType.STRING),
     allowNull: false,
     field: CampModel.CAMP_NEEDS,
   })
-  needs!: string[];
+  needs!: CampNeed[];
 
   @Column({
     type: DataType.STRING(500),
@@ -89,7 +90,7 @@ export default class CampModel extends Model<ICamp> implements ICamp {
     allowNull: false,
     field: CampModel.CAMP_CONTACT_TYPE,
   })
-  contactType!: string;
+  contactType!: ContactType;
 
   @Column({
     type: DataType.STRING(50),
