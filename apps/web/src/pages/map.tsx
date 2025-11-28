@@ -1,15 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react'
+'use client'
+
+import { useState, useEffect, useMemo } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
-import { Card, CardContent, CardHeader, CardTitle } from 'apps/web/src/components/ui/card'
 import { Button } from 'apps/web/src/components/ui/button'
-import { Input } from 'apps/web/src/components/ui/input'
 import { Label } from 'apps/web/src/components/ui/label'
-import { HelpRequestResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/help-request/response/help_request_response_dto'
-import { CampResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/camp/response/camp_response_dto'
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from 'apps/web/src/components/ui/drawer'
+import type { HelpRequestResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/help-request/response/help_request_response_dto'
+import type { CampResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/camp/response/camp_response_dto'
 import { Urgency, HelpRequestCategory } from '@nx-mono-repo-deployment-test/shared/src/enums'
-import { Filter, ArrowLeft, X, Menu } from 'lucide-react'
+import { Filter, ArrowLeft } from 'lucide-react'
 import {
   SRI_LANKA_PROVINCES,
   SRI_LANKA_DISTRICTS,
@@ -26,6 +34,8 @@ export default function MapDashboard() {
   const [camps, setCamps] = useState<CampResponseDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [tempFilters, setTempFilters] = useState<{
     province?: string
     district?: string
@@ -40,7 +50,16 @@ export default function MapDashboard() {
   }>({})
   const [mapCenter, setMapCenter] = useState<[number, number]>([7.8731, 80.7718])
   const [mapZoom, setMapZoom] = useState(8)
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Read filters from query params on initial load
   useEffect(() => {
@@ -243,6 +262,12 @@ export default function MapDashboard() {
     if (tempFilters.emergencyLevel) params.set('urgency', tempFilters.emergencyLevel)
     if (tempFilters.type) params.set('type', tempFilters.type)
     router.push(`/map?${params.toString()}`, undefined, { shallow: true })
+    setIsDrawerOpen(false)
+  }
+
+  const handleViewRequestDetails = (request: HelpRequestResponseDto) => {
+    const requestData = encodeURIComponent(JSON.stringify(request))
+    router.push(`/request-details?requestData=${requestData}`)
   }
 
   const filteredRequests = useMemo(() => {
@@ -274,12 +299,12 @@ export default function MapDashboard() {
     if (appliedFilters.type === 'individual') {
       filtered = filtered.filter((request) => {
         const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
-        return peopleMatch && parseInt(peopleMatch[1]) <= 10
+        return peopleMatch && Number.parseInt(peopleMatch[1]) <= 10
       })
     } else if (appliedFilters.type === 'group') {
       filtered = filtered.filter((request) => {
         const peopleMatch = request.shortNote?.match(/People:\s*(\d+)/)
-        return peopleMatch && parseInt(peopleMatch[1]) > 10
+        return peopleMatch && Number.parseInt(peopleMatch[1]) > 10
       })
     }
 
@@ -290,182 +315,162 @@ export default function MapDashboard() {
     ? SRI_LANKA_DISTRICTS[tempFilters.province] || []
     : Object.values(SRI_LANKA_DISTRICTS).flat()
 
-  return (
-    <>
-      <Head>
-        <title>Map Dashboard - Sri Lanka Crisis Help</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-      <div className="min-h-screen bg-gray-50 relative">
-        {/* Filter Navbar */}
-        <nav className="absolute top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
-          <div className="container mx-auto px-4 py-3">
-            {/* Mobile Header */}
-            <div className="flex items-center justify-between md:hidden mb-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-sm">Back</span>
-              </Button>
-              <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-gray-600" />
-                <span className="font-semibold text-gray-900 text-sm">Filters</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className="flex items-center gap-2"
-              >
-                {showMobileFilters ? (
-                  <>
-                    <X className="h-4 w-4" />
-                    <span className="text-sm">Close</span>
-                  </>
-                ) : (
-                  <>
-                    <Menu className="h-4 w-4" />
-                    <span className="text-sm">Menu</span>
-                  </>
-                )}
-              </Button>
-            </div>
+  const DesktopFiltersBar = () => (
+    <nav className="hidden md:block absolute top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/50 shadow-sm">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-gray-600" />
+            <span className="font-semibold text-gray-900">Filters</span>
+          </div>
 
-            {/* Mobile Filters (Collapsible) */}
-            {showMobileFilters && (
-              <div className="md:hidden mb-3 space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <div className="grid grid-cols-1 gap-3">
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">Province</Label>
-                    <select
-                      className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
-                      value={tempFilters.province || ''}
-                      onChange={(e) => {
-                        const province = e.target.value || undefined
-                        setTempFilters({
-                          ...tempFilters,
-                          province,
-                          district: undefined,
-                        })
-                      }}
-                    >
-                      <option value="">All Provinces</option>
-                      {SRI_LANKA_PROVINCES.map((province) => (
-                        <option key={province} value={province}>
-                          {province}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+          <div className="flex-1 flex flex-wrap items-center gap-3">
+            <select
+              className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[150px]"
+              value={tempFilters.province || ''}
+              onChange={(e) => {
+                const province = e.target.value || undefined
+                setTempFilters({
+                  ...tempFilters,
+                  province,
+                  district: undefined,
+                })
+              }}
+            >
+              <option value="">All Provinces</option>
+              {SRI_LANKA_PROVINCES.map((province) => (
+                <option key={province} value={province}>
+                  {province}
+                </option>
+              ))}
+            </select>
 
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">District</Label>
-                    <select
-                      className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
-                      value={tempFilters.district || ''}
-                      onChange={(e) =>
-                        setTempFilters({
-                          ...tempFilters,
-                          district: e.target.value || undefined,
-                        })
-                      }
-                      disabled={!tempFilters.province}
-                    >
-                      <option value="">All Districts</option>
-                      {availableDistricts.map((district) => (
-                        <option key={district} value={district}>
-                          {district}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+            <select
+              className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[150px]"
+              value={tempFilters.district || ''}
+              onChange={(e) =>
+                setTempFilters({
+                  ...tempFilters,
+                  district: e.target.value || undefined,
+                })
+              }
+              disabled={!tempFilters.province}
+            >
+              <option value="">All Districts</option>
+              {availableDistricts.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
 
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">Emergency Level</Label>
-                    <select
-                      className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
-                      value={tempFilters.emergencyLevel || ''}
-                      onChange={(e) =>
-                        setTempFilters({
-                          ...tempFilters,
-                          emergencyLevel: e.target.value ? (e.target.value as Urgency) : undefined,
-                        })
-                      }
-                    >
-                      <option value="">All Levels</option>
-                      <option value={Urgency.LOW}>Low</option>
-                      <option value={Urgency.MEDIUM}>Medium</option>
-                      <option value={Urgency.HIGH}>High</option>
-                    </select>
-                  </div>
+            <select
+              className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[130px]"
+              value={tempFilters.emergencyLevel || ''}
+              onChange={(e) =>
+                setTempFilters({
+                  ...tempFilters,
+                  emergencyLevel: e.target.value ? (e.target.value as Urgency) : undefined,
+                })
+              }
+            >
+              <option value="">All Levels</option>
+              <option value={Urgency.LOW}>Low</option>
+              <option value={Urgency.MEDIUM}>Medium</option>
+              <option value={Urgency.HIGH}>High</option>
+            </select>
 
-                  <div>
-                    <Label className="text-xs text-gray-600 mb-1 block">Type</Label>
-                    <select
-                      className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
-                      value={tempFilters.type || ''}
-                      onChange={(e) =>
-                        setTempFilters({
-                          ...tempFilters,
-                          type: e.target.value
-                            ? (e.target.value as 'individual' | 'group')
-                            : undefined,
-                        })
-                      }
-                    >
-                      <option value="">All Types</option>
-                      <option value="individual">Individual</option>
-                      <option value="group">Group</option>
-                    </select>
-                  </div>
-                </div>
+            <select
+              className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[120px]"
+              value={tempFilters.type || ''}
+              onChange={(e) =>
+                setTempFilters({
+                  ...tempFilters,
+                  type: e.target.value ? (e.target.value as 'individual' | 'group') : undefined,
+                })
+              }
+            >
+              <option value="">All Types</option>
+              <option value="individual">Individual</option>
+              <option value="group">Group</option>
+            </select>
 
-                <div className="flex flex-col gap-2 pt-2">
-                  <Button onClick={handleApplyFilters} className="w-full h-11">
-                    Apply Filters
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      router.push('/')
-                      setTimeout(() => {
-                        const requestsSection = document.getElementById('requests-section')
-                        if (requestsSection) {
-                          requestsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                        }
-                      }, 100)
-                    }}
-                    className="w-full h-11"
-                  >
-                    View Requests List
-                  </Button>
-                </div>
-              </div>
-            )}
+            <Button onClick={handleApplyFilters} className="h-10">
+              Apply Filters
+            </Button>
 
-            {/* Desktop Filters */}
-            <div className="hidden md:flex md:items-center md:gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/')}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <div className="flex items-center gap-2">
-                <Filter className="h-5 w-5 text-gray-600" />
-                <span className="font-semibold text-gray-900">Filters</span>
-              </div>
+            <Button variant="outline" onClick={() => router.push('/#requests')} className="h-10">
+              View Requests List
+            </Button>
+          </div>
+        </div>
+        {appliedFilters.district || appliedFilters.province ? (
+          <div className="mt-2 text-sm text-gray-600">
+            Showing:{' '}
+            {appliedFilters.district
+              ? appliedFilters.district
+              : appliedFilters.province
+                ? appliedFilters.province
+                : 'All Locations'}
+          </div>
+        ) : null}
+      </div>
+    </nav>
+  )
 
-              <div className="flex-1 flex flex-wrap items-center gap-3">
+  const MobileBottomBar = () => (
+    <div
+      className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] w-[92%] transition-all duration-300 ease-out"
+      style={{ transform: isDrawerOpen ? 'translateY(150px)' : 'translateY(0)' }}
+    >
+      <div className="flex items-center justify-around bg-white/90 backdrop-blur-xl shadow-lg border border-gray-200 rounded-2xl py-3 px-4">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/')}
+          className="flex flex-col items-center justify-center gap-1 text-gray-700 hover:text-gray-900 hover:bg-transparent"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="text-[11px] font-medium">Back</span>
+        </Button>
+
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-300/60"></div>
+
+        {/* Filters Button */}
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DrawerTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex flex-col items-center justify-center gap-1 text-gray-700 hover:text-gray-900 hover:bg-transparent"
+            >
+              <Filter className="h-5 w-5" />
+              <span className="text-[11px] font-medium">Filters</span>
+            </Button>
+          </DrawerTrigger>
+
+          <DrawerContent className="max-h-[45vh]">
+            <DrawerHeader className="text-center">
+              <DrawerTitle>Filter Map</DrawerTitle>
+            </DrawerHeader>
+
+            <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="province-select">Province</Label>
                 <select
-                  className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[150px]"
+                  id="province-select"
+                  className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
                   value={tempFilters.province || ''}
                   onChange={(e) => {
                     const province = e.target.value || undefined
@@ -483,9 +488,13 @@ export default function MapDashboard() {
                     </option>
                   ))}
                 </select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="district-select">District</Label>
                 <select
-                  className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[150px]"
+                  id="district-select"
+                  className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm disabled:opacity-50"
                   value={tempFilters.district || ''}
                   onChange={(e) =>
                     setTempFilters({
@@ -502,9 +511,13 @@ export default function MapDashboard() {
                     </option>
                   ))}
                 </select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="urgency-select">Urgency Level</Label>
                 <select
-                  className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[130px]"
+                  id="urgency-select"
+                  className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
                   value={tempFilters.emergencyLevel || ''}
                   onChange={(e) =>
                     setTempFilters({
@@ -518,9 +531,13 @@ export default function MapDashboard() {
                   <option value={Urgency.MEDIUM}>Medium</option>
                   <option value={Urgency.HIGH}>High</option>
                 </select>
+              </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="type-select">Type</Label>
                 <select
-                  className="h-10 rounded-md border border-input bg-white px-3 py-2 text-sm min-w-[120px]"
+                  id="type-select"
+                  className="w-full h-10 rounded-md border border-input bg-white px-3 py-2 text-sm"
                   value={tempFilters.type || ''}
                   onChange={(e) =>
                     setTempFilters({
@@ -533,45 +550,42 @@ export default function MapDashboard() {
                   <option value="individual">Individual</option>
                   <option value="group">Group</option>
                 </select>
-
-                <Button onClick={handleApplyFilters} className="h-10">
-                  Apply Filters
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    router.push('/')
-                    setTimeout(() => {
-                      const requestsSection = document.getElementById('requests-section')
-                      if (requestsSection) {
-                        requestsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                      }
-                    }, 100)
-                  }}
-                  className="h-10"
-                >
-                  View Requests List
-                </Button>
               </div>
             </div>
+            <DrawerFooter className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setTempFilters({})
+                  setAppliedFilters({})
+                  router.push('/map', undefined, { shallow: true })
+                  setIsDrawerOpen(false)
+                }}
+                className="w-full"
+              >
+                Clear
+              </Button>
 
-            {/* Active Filters Display */}
-            {(appliedFilters.district || appliedFilters.province) && (
-              <div className="mt-2 text-sm text-gray-600">
-                Showing:{' '}
-                {appliedFilters.district
-                  ? appliedFilters.district
-                  : appliedFilters.province
-                    ? appliedFilters.province
-                    : 'All Locations'}
-              </div>
-            )}
-          </div>
-        </nav>
+              <Button onClick={handleApplyFilters} className="w-full">
+                Apply
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      </div>
+    </div>
+  )
 
+  return (
+    <>
+      <Head>
+        <title>Help Map - Sri Lanka Crisis Help</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <div className="min-h-screen bg-gray-50 relative">
+        {isMobile ? <MobileBottomBar /> : <DesktopFiltersBar />}
         {/* Map Section */}
-        <div className="h-screen pt-20 md:pt-24">
+        <div className="h-screen pt-0 md:pt-24 pb-0 md:pb-0 relative">
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
               <div className="text-gray-600">Loading map...</div>
@@ -586,9 +600,10 @@ export default function MapDashboard() {
             <div className="h-full w-full">
               <Map
                 helpRequests={filteredRequests}
-                camps={appliedFilters.type !== 'individual' ? camps : []}
+                camps={camps}
                 center={mapCenter}
                 zoom={mapZoom}
+                onRequestClick={handleViewRequestDetails}
               />
             </div>
           )}
