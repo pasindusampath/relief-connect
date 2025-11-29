@@ -367,14 +367,15 @@ export default function DonationInteractionModal({
                           );
                         })}
                       </div>
-                      {donation.contactNumber && isOwner && (
-                        <div className="text-sm text-gray-700 pt-2 border-t">
+                      {donation.donatorContactNumber && isOwner && (
+                        <div className="text-sm text-gray-700 pt-2 border-t flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-gray-500" />
                           <span className="font-medium">Contact:</span>{' '}
                           <a
-                            href={`tel:${donation.contactNumber}`}
+                            href={`tel:${donation.donatorContactNumber}`}
                             className="text-blue-600 hover:underline"
                           >
-                            {donation.contactNumber}
+                            {donation.donatorContactNumber}
                           </a>
                         </div>
                       )}

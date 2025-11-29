@@ -2,6 +2,7 @@ import apiClient from './api-client';
 import { IApiResponse } from '@nx-mono-repo-deployment-test/shared/src/interfaces';
 import { ICreateDonation } from '@nx-mono-repo-deployment-test/shared/src/interfaces/donation/ICreateDonation';
 import { DonationWithDonatorResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/donation/response/donation_with_donator_response_dto';
+import { DonationResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/donation/response/donation_response_dto';
 
 /**
  * Donation Service
