@@ -38,7 +38,20 @@ class CampService {
   }): Promise<IApiResponse<CampResponseDto[]>> {
     try {
       const camps = await this.campDao.findAll(filters);
-      const campDtos = camps.map(camp => new CampResponseDto(camp));
+      
+      // Fetch items and drop-off locations for all camps
+      const campItemDao = CampItemDao.getInstance();
+      const campDropOffLocationDao = CampDropOffLocationDao.getInstance();
+      
+      const campDtos = await Promise.all(
+        camps.map(async (camp) => {
+          const [items, dropOffLocations] = await Promise.all([
+            campItemDao.findByCampId(camp.id!),
+            campDropOffLocationDao.findByCampId(camp.id!),
+          ]);
+          return new CampResponseDto(camp, items, dropOffLocations);
+        })
+      );
 
       return {
         success: true,

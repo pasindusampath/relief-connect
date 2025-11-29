@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useAuth } from '../../hooks/useAuth';
 import { campService } from '../../services';
 import { CampResponseDto } from '@nx-mono-repo-deployment-test/shared/src/dtos/camp/response/camp_response_dto';
@@ -24,6 +25,9 @@ import {
 } from 'lucide-react';
 import { CampType, PeopleRange, CampNeed, ContactType, CampStatus } from '@nx-mono-repo-deployment-test/shared/src/enums';
 
+// Dynamically import the map component to avoid SSR issues
+const CampMap = dynamic(() => import('../../components/CampMap'), { ssr: false });
+
 export default function CampDetailsPage() {
   const router = useRouter();
   const { id } = router.query;
@@ -44,6 +48,18 @@ export default function CampDetailsPage() {
       loadCamp();
     }
   }, [id, isAuthenticated, authLoading, router]);
+
+  // Scroll to drop-off locations section if tab=dropoff query param is present
+  useEffect(() => {
+    if (router.query.tab === 'dropoff' && camp) {
+      setTimeout(() => {
+        const element = document.getElementById('dropoff-locations');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [router.query.tab, camp]);
 
   const loadCamp = async () => {
     if (!id || typeof id !== 'string') {
@@ -187,20 +203,23 @@ export default function CampDetailsPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Location */}
+              {/* Location Map */}
               <div>
                 <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
-                  Location
+                  Location Map
                 </h3>
+                <div className="mb-3">
+                  <CampMap camp={camp} />
+                </div>
                 <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-600">Latitude:</span>
+                      <span className="text-gray-600">Camp Latitude:</span>
                       <span className="ml-2 font-mono">{camp.lat}</span>
                     </div>
                     <div>
-                      <span className="text-gray-600">Longitude:</span>
+                      <span className="text-gray-600">Camp Longitude:</span>
                       <span className="ml-2 font-mono">{camp.lng}</span>
                     </div>
                   </div>
@@ -211,7 +230,96 @@ export default function CampDetailsPage() {
                     </div>
                   )}
                 </div>
+                {camp.dropOffLocations && camp.dropOffLocations.length > 0 && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="w-3 h-3 rounded bg-blue-500"></span>
+                      Camp Location
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                      Drop-off Locations ({camp.dropOffLocations.length})
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Drop-off Locations */}
+              {camp.dropOffLocations && camp.dropOffLocations.length > 0 && (
+                <div id="dropoff-locations">
+                  <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <MapPin className="w-5 h-5" />
+                    Drop-off Locations ({camp.dropOffLocations.length})
+                  </h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    All drop-off locations are shown on the map above. Click on the green markers to see details.
+                  </p>
+                  <div className="space-y-4">
+                    {camp.dropOffLocations.map((location, index) => (
+                      <div key={location.id || index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                            <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                            {location.name}
+                          </h4>
+                          {location.lat && location.lng && (
+                            <a
+                              href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+                            >
+                              <MapPin className="w-4 h-4" />
+                              Open in Google Maps
+                            </a>
+                          )}
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          {location.address && (
+                            <div>
+                              <span className="text-gray-600">Address:</span>
+                              <span className="ml-2 text-gray-900">{location.address}</span>
+                            </div>
+                          )}
+                          {(location.lat || location.lng) && (
+                            <div className="grid grid-cols-2 gap-4">
+                              {location.lat && (
+                                <div>
+                                  <span className="text-gray-600">Latitude:</span>
+                                  <span className="ml-2 font-mono text-gray-900">{location.lat}</span>
+                                </div>
+                              )}
+                              {location.lng && (
+                                <div>
+                                  <span className="text-gray-600">Longitude:</span>
+                                  <span className="ml-2 font-mono text-gray-900">{location.lng}</span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {location.contactNumber && (
+                            <div>
+                              <span className="text-gray-600">Contact:</span>
+                              <a
+                                href={`tel:${location.contactNumber}`}
+                                className="ml-2 text-blue-600 hover:text-blue-800"
+                              >
+                                {location.contactNumber}
+                              </a>
+                            </div>
+                          )}
+                          {location.notes && (
+                            <div>
+                              <span className="text-gray-600">Notes:</span>
+                              <span className="ml-2 text-gray-900">{location.notes}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* People Information */}
               <div>
