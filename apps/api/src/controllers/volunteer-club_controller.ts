@@ -58,7 +58,7 @@ class VolunteerClubController {
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const idParam = req.params as unknown as IdParamDto;
-      const id = parseInt(idParam.id, 10);
+      const id = typeof idParam.id === 'string' ? parseInt(idParam.id, 10) : idParam.id;
 
       if (isNaN(id)) {
         res.sendError('Invalid volunteer club ID', 400);
@@ -84,7 +84,7 @@ class VolunteerClubController {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const idParam = req.params as unknown as IdParamDto;
-      const id = parseInt(idParam.id, 10);
+      const id = typeof idParam.id === 'string' ? parseInt(idParam.id, 10) : idParam.id;
 
       if (isNaN(id)) {
         res.sendError('Invalid volunteer club ID', 400);
@@ -111,7 +111,7 @@ class VolunteerClubController {
   delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const idParam = req.params as unknown as IdParamDto;
-      const id = parseInt(idParam.id, 10);
+      const id = typeof idParam.id === 'string' ? parseInt(idParam.id, 10) : idParam.id;
 
       if (isNaN(id)) {
         res.sendError('Invalid volunteer club ID', 400);
