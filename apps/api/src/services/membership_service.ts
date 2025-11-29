@@ -102,7 +102,7 @@ class MembershipService {
   /**
    * Get all memberships for a volunteer club
    */
-  public async getClubMemberships(volunteerClubId: number, requesterId: number): Promise<IApiResponse<MembershipResponseDto[]>> {
+  public async getClubMemberships(volunteerClubId: number): Promise<IApiResponse<MembershipResponseDto[]>> {
     try {
       // Verify club exists
       const club = await this.volunteerClubDao.findById(volunteerClubId);

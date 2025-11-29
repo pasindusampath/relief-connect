@@ -72,19 +72,15 @@ export const initializeAssociations = (): void => {
   });
 
   // VolunteerClub-Membership association
-  // The @BelongsTo decorator in UserVolunteerClubMembershipModel already creates the belongsTo side,
-  // so we only need to set up the hasMany side here
-  VolunteerClubModel.hasMany(UserVolunteerClubMembershipModel, { 
-    foreignKey: UserVolunteerClubMembershipModel.MEMBERSHIP_VOLUNTEER_CLUB_ID, 
-    as: 'memberships' 
-  });
+  // The @HasMany decorator in VolunteerClubModel already creates this association,
+  // so we don't need to set it up here
 
   // User-Membership association (as member)
   // The @BelongsTo decorator in UserVolunteerClubMembershipModel already creates the belongsTo side,
   // so we only need to set up the hasMany side here
   UserModel.hasMany(UserVolunteerClubMembershipModel, { 
     foreignKey: UserVolunteerClubMembershipModel.MEMBERSHIP_USER_ID, 
-    as: 'memberships' 
+    as: 'clubMemberships' 
   });
 
   // User-Membership association (as reviewer)

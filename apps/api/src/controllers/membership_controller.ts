@@ -102,7 +102,7 @@ class MembershipController {
         }
       }
 
-      const result = await this.membershipService.getClubMemberships(clubId, req.user.id!);
+      const result = await this.membershipService.getClubMemberships(clubId);
 
       if (result.success && result.data) {
         res.sendSuccess(result.data, 'Club memberships retrieved successfully', 200);
@@ -126,7 +126,7 @@ class MembershipController {
       }
 
       const idParam = req.params as unknown as IdParamDto;
-      const id = parseInt(idParam.id, 10);
+      const id = idParam.id;
 
       if (isNaN(id)) {
         res.sendError('Invalid membership ID', 400);
@@ -178,7 +178,7 @@ class MembershipController {
       }
 
       const idParam = req.params as unknown as IdParamDto;
-      const id = parseInt(idParam.id, 10);
+      const id = idParam.id
 
       if (isNaN(id)) {
         res.sendError('Invalid membership ID', 400);
@@ -236,7 +236,7 @@ class MembershipController {
       }
 
       const idParam = req.params as unknown as IdParamDto;
-      const id = parseInt(idParam.id, 10);
+      const id = idParam.id
 
       if (isNaN(id)) {
         res.sendError('Invalid membership ID', 400);

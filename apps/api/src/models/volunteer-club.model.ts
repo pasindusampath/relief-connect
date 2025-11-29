@@ -91,7 +91,9 @@ export default class VolunteerClubModel extends Model<IVolunteerClub> implements
   })
   status!: UserStatus;
 
-  @HasMany(() => UserVolunteerClubMembershipModel)
+  @HasMany(() => UserVolunteerClubMembershipModel, {
+    foreignKey: 'volunteerClubId',
+  })
   memberships?: UserVolunteerClubMembershipModel[];
 
   @CreatedAt
