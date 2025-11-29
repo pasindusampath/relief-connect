@@ -70,7 +70,11 @@ COPY --from=builder /app/libs/shared/src ./libs/shared/src
 # Copy compiled JavaScript files from dist/libs/shared to maintain src/ structure
 RUN rm -rf node_modules/@nx-mono-repo-deployment-test/shared && \
     mkdir -p node_modules/@nx-mono-repo-deployment-test/shared
-COPY --from=builder /app/libs/shared/package.json node_modules/@nx-mono-repo-deployment-test/shared/package.json
+# Copy package.json and update main field to point to compiled JS file
+COPY --from=builder /app/libs/shared/package.json node_modules/@nx-mono-repo-deployment-test/shared/package.json.tmp
+RUN sed 's|"main": "src/index.ts"|"main": "src/index.js"|' node_modules/@nx-mono-repo-deployment-test/shared/package.json.tmp | \
+    sed 's|"types": "src/index.ts"|"types": "src/index.js"|' > node_modules/@nx-mono-repo-deployment-test/shared/package.json && \
+    rm node_modules/@nx-mono-repo-deployment-test/shared/package.json.tmp
 # Copy compiled JavaScript files from dist/libs/shared/libs/shared/src
 # The TypeScript compiler preserves the full path structure, so output is at dist/libs/shared/libs/shared/src/
 # We need to copy the src/ directory to maintain the import paths like @nx-mono-repo-deployment-test/shared/src/enums
