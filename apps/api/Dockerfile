@@ -71,10 +71,10 @@ COPY --from=builder /app/libs/shared/src ./libs/shared/src
 RUN rm -rf node_modules/@nx-mono-repo-deployment-test/shared && \
     mkdir -p node_modules/@nx-mono-repo-deployment-test/shared
 COPY --from=builder /app/libs/shared/package.json node_modules/@nx-mono-repo-deployment-test/shared/package.json
-# Copy compiled JavaScript files from dist/libs/shared/src
-# The build should create output at dist/libs/shared/src/ (preserving src/ structure)
-# If this fails, check the build output debugging above to see where files actually are
-COPY --from=builder /app/dist/libs/shared/src node_modules/@nx-mono-repo-deployment-test/shared/src
+# Copy compiled JavaScript files from dist/libs/shared/libs/shared/src
+# The TypeScript compiler preserves the full path structure, so output is at dist/libs/shared/libs/shared/src/
+# We need to copy the src/ directory to maintain the import paths like @nx-mono-repo-deployment-test/shared/src/enums
+COPY --from=builder /app/dist/libs/shared/libs/shared/src node_modules/@nx-mono-repo-deployment-test/shared/src
 # Copy apps/api directory structure for .env file resolution
 # The .env.dev file will be mounted by docker-compose, but we need the directory structure
 COPY --from=builder /app/apps/api ./apps/api
