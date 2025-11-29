@@ -188,7 +188,7 @@ export default function EmergencyRequestForm({
         ? ` Special Needs: ${formData.specialNeeds}`
         : ''
 
-      const helpRequestData: ICreateHelpRequest = {
+      const helpRequestData: ICreateHelpRequest & { rationItemQuantities?: Record<string, number> } = {
         lat: formData.gpsLocation.lat,
         lng: formData.gpsLocation.lng,
         urgency: formData.urgent ? Urgency.HIGH : Urgency.MEDIUM,
