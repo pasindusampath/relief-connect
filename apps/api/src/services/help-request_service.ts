@@ -150,10 +150,29 @@ class HelpRequestService {
         rationItems: createHelpRequestDto.rationItems,
       });
 
+      // Normalize ration items: convert array to object format if needed
+      let rationItemsMap: Record<string, number> = {};
+      if (trimmedDto.rationItems) {
+        if (Array.isArray(trimmedDto.rationItems)) {
+          // Backward compatibility: array format -> convert to object with quantity 1
+          trimmedDto.rationItems.forEach(itemCode => {
+            rationItemsMap[itemCode] = 1;
+          });
+        } else {
+          // Object format: already has quantities
+          rationItemsMap = trimmedDto.rationItems;
+        }
+      }
+
       // Validate ration items exist in database
-      if (trimmedDto.rationItems && trimmedDto.rationItems.length > 0) {
+      if (Object.keys(rationItemsMap).length > 0) {
         const invalidItems: string[] = [];
-        for (const itemCode of trimmedDto.rationItems) {
+        for (const [itemCode, quantity] of Object.entries(rationItemsMap)) {
+          // Validate quantity is positive
+          if (typeof quantity !== 'number' || quantity <= 0) {
+            invalidItems.push(`${itemCode} (invalid quantity)`);
+            continue;
+          }
           // Validate it's a valid enum value
           if (!Object.values(RationItemType).includes(itemCode as RationItemType)) {
             invalidItems.push(itemCode);
@@ -168,22 +187,23 @@ class HelpRequestService {
         if (invalidItems.length > 0) {
           return {
             success: false,
-            error: `Invalid ration items: ${invalidItems.join(', ')}. Please ensure all items are seeded.`,
+            error: `Invalid ration items: ${invalidItems.join(', ')}. Please ensure all items are seeded and quantities are positive numbers.`,
           };
         }
       }
 
-      const helpRequest = await this.helpRequestDao.create(trimmedDto, userId);
+      // Store ration items as array for backward compatibility (for display purposes)
+      // Create new DTO with normalized ration items array
+      const rationItemsArray = Object.keys(rationItemsMap);
+      const normalizedDto = new CreateHelpRequestDto({
+        ...trimmedDto,
+        rationItems: rationItemsArray,
+      });
+      const helpRequest = await this.helpRequestDao.create(normalizedDto, userId);
 
-      // Create inventory items for ration items
-      // If rationItems is provided as an array of strings, create inventory items with quantityNeeded = 1 for each
-      // TODO: Enhance to support quantities in the future
-      if (trimmedDto.rationItems && trimmedDto.rationItems.length > 0) {
-        const inventoryItemsMap: Record<string, number> = {};
-        trimmedDto.rationItems.forEach(itemCode => {
-          inventoryItemsMap[itemCode] = 1; // Default quantity of 1 per item
-        });
-        await this.inventoryItemDao.createInventoryItems(helpRequest.id!, inventoryItemsMap);
+      // Create inventory items with quantities
+      if (Object.keys(rationItemsMap).length > 0) {
+        await this.inventoryItemDao.createInventoryItems(helpRequest.id!, rationItemsMap);
       }
 
       return {

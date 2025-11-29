@@ -75,6 +75,17 @@ class HelpRequestDao {
 
   public async create(createHelpRequestDto: CreateHelpRequestDto, userId?: number): Promise<IHelpRequest> {
     try {
+      // Normalize rationItems: convert object to array if needed (for database storage)
+      let rationItemsArray: string[] | undefined;
+      if (createHelpRequestDto.rationItems) {
+        if (Array.isArray(createHelpRequestDto.rationItems)) {
+          rationItemsArray = createHelpRequestDto.rationItems;
+        } else {
+          // Object format: extract keys (item codes)
+          rationItemsArray = Object.keys(createHelpRequestDto.rationItems);
+        }
+      }
+
       const helpRequest = await HelpRequestModel.create({
         [HelpRequestModel.HELP_REQUEST_USER_ID]: userId,
         [HelpRequestModel.HELP_REQUEST_LAT]: createHelpRequestDto.lat,
@@ -89,7 +100,7 @@ class HelpRequestDao {
         [HelpRequestModel.HELP_REQUEST_ELDERS]: createHelpRequestDto.elders,
         [HelpRequestModel.HELP_REQUEST_CHILDREN]: createHelpRequestDto.children,
         [HelpRequestModel.HELP_REQUEST_PETS]: createHelpRequestDto.pets,
-        [HelpRequestModel.HELP_REQUEST_RATION_ITEMS]: createHelpRequestDto.rationItems,
+        [HelpRequestModel.HELP_REQUEST_RATION_ITEMS]: rationItemsArray,
         [HelpRequestModel.HELP_REQUEST_STATUS]: HelpRequestStatus.OPEN,
       });
       return helpRequest.toJSON() as IHelpRequest;
