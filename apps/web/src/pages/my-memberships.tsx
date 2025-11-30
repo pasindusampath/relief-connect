@@ -111,7 +111,7 @@ export default function MyMembershipsPage() {
           {memberships.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-gray-500 text-lg mb-4">You haven't requested to join any clubs yet.</p>
+                <p className="text-gray-500 text-lg mb-4">You haven&apos;t requested to join any clubs yet.</p>
                 <Link href="/clubs">
                   <Button>Browse Volunteer Clubs</Button>
                 </Link>

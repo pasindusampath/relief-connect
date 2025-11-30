@@ -1,5 +1,6 @@
 import { CampType, PeopleRange, CampNeed, ContactType, RationItemType } from '../../enums';
-import { ICampDropOffLocation, ICampItem } from './ICampDropOffLocation';
+import { ICampDropOffLocation } from './ICampDropOffLocation';
+import { ICampItem } from './ICampItem';
 
 /**
  * Frontend interface for creating a new camp

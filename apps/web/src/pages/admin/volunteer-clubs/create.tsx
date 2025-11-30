@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 import { useAuth } from '../../../hooks/useAuth';
 import { volunteerClubService } from '../../../services';
-import { ICreateVolunteerClub } from '../../../types/volunteer-club';
+import { ICreateVolunteerClub, IUpdateVolunteerClub } from '../../../types/volunteer-club';
 import VolunteerClubForm from '../../../components/VolunteerClubForm';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -21,10 +21,25 @@ export default function CreateVolunteerClubPage() {
     }
   }, [isAuthenticated, isAdmin, router]);
 
-  const handleSubmit = async (data: ICreateVolunteerClub) => {
+  const handleSubmit = async (data: ICreateVolunteerClub | IUpdateVolunteerClub) => {
+    // Validate required fields for create
+    if (!data.name) {
+      alert('Club name is required');
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await volunteerClubService.createVolunteerClub(data);
+      // Construct ICreateVolunteerClub from the union type
+      const createData: ICreateVolunteerClub = {
+        name: data.name,
+        ...(data.description && { description: data.description }),
+        ...(data.contactNumber && { contactNumber: data.contactNumber }),
+        ...(data.email && { email: data.email }),
+        ...(data.address && { address: data.address }),
+        ...(data.userId && { userId: data.userId }),
+      };
+      const response = await volunteerClubService.createVolunteerClub(createData);
       if (response.success) {
         router.push('/admin/volunteer-clubs');
       } else {

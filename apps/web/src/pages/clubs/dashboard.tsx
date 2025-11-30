@@ -102,10 +102,10 @@ export default function VolunteerClubDashboard() {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
-      hr.description?.toLowerCase().includes(search) ||
-      hr.district?.toLowerCase().includes(search) ||
-      hr.city?.toLowerCase().includes(search) ||
-      hr.address?.toLowerCase().includes(search)
+      hr.shortNote?.toLowerCase().includes(search) ||
+      hr.approxArea?.toLowerCase().includes(search) ||
+      hr.name?.toLowerCase().includes(search) ||
+      hr.contact?.toLowerCase().includes(search)
     );
   });
 
@@ -113,9 +113,9 @@ export default function VolunteerClubDashboard() {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
-      d.description?.toLowerCase().includes(search) ||
       d.donatorName?.toLowerCase().includes(search) ||
-      d.donatorContactNumber?.toLowerCase().includes(search)
+      d.donatorMobileNumber?.toLowerCase().includes(search) ||
+      d.donatorUsername?.toLowerCase().includes(search)
     );
   });
 
@@ -125,7 +125,8 @@ export default function VolunteerClubDashboard() {
     return (
       c.name?.toLowerCase().includes(search) ||
       c.location?.toLowerCase().includes(search) ||
-      c.district?.toLowerCase().includes(search)
+      c.shortNote?.toLowerCase().includes(search) ||
+      c.description?.toLowerCase().includes(search)
     );
   });
 
@@ -267,7 +268,7 @@ export default function VolunteerClubDashboard() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Pending Requests</p>
                     <p className="text-2xl font-bold text-gray-900 mt-1">
-                      {helpRequests.filter(hr => hr.status === 'PENDING').length}
+                      {helpRequests.filter(hr => hr.status === 'OPEN').length}
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
@@ -344,7 +345,7 @@ export default function VolunteerClubDashboard() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-lg">{hr.description || 'Help Request'}</h3>
+                                <h3 className="font-semibold text-lg">{hr.shortNote || 'Help Request'}</h3>
                                 {hr.urgency && (
                                   <span className={`px-2 py-1 text-xs rounded border ${getUrgencyColor(hr.urgency)}`}>
                                     {hr.urgency}
@@ -352,19 +353,19 @@ export default function VolunteerClubDashboard() {
                                 )}
                               </div>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-4">
-                                {hr.district && (
+                                {hr.approxArea && (
                                   <div>
-                                    <span className="font-medium">District:</span> {hr.district}
+                                    <span className="font-medium">Area:</span> {hr.approxArea}
                                   </div>
                                 )}
-                                {hr.city && (
+                                {hr.name && (
                                   <div>
-                                    <span className="font-medium">City:</span> {hr.city}
+                                    <span className="font-medium">Requester:</span> {hr.name}
                                   </div>
                                 )}
-                                {hr.contactNumber && (
+                                {hr.contact && (
                                   <div>
-                                    <span className="font-medium">Contact:</span> {hr.contactNumber}
+                                    <span className="font-medium">Contact:</span> {hr.contact}
                                   </div>
                                 )}
                                 {hr.status && (
@@ -376,12 +377,6 @@ export default function VolunteerClubDashboard() {
                                   </div>
                                 )}
                               </div>
-                              {hr.address && (
-                                <p className="text-sm text-gray-600 mb-4">
-                                  <MapPin className="w-4 h-4 inline mr-1" />
-                                  {hr.address}
-                                </p>
-                              )}
                             </div>
                             <div className="flex flex-col gap-2 ml-4">
                               <Link href={`/help-requests/${hr.id}`}>
@@ -419,11 +414,16 @@ export default function VolunteerClubDashboard() {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <h3 className="font-semibold text-lg">
-                                  {donation.description || 'Donation'}
+                                  Donation from {donation.donatorName || 'Unknown'}
                                 </h3>
-                                {donation.status && (
-                                  <span className={`px-2 py-1 text-xs rounded ${getStatusColor(donation.status)}`}>
-                                    {donation.status}
+                                {(donation.ownerMarkedCompleted || donation.donatorMarkedCompleted) && (
+                                  <span className={`px-2 py-1 text-xs rounded ${getStatusColor('COMPLETED')}`}>
+                                    Completed
+                                  </span>
+                                )}
+                                {donation.donatorMarkedScheduled && !donation.ownerMarkedCompleted && (
+                                  <span className={`px-2 py-1 text-xs rounded ${getStatusColor('SCHEDULED')}`}>
+                                    Scheduled
                                   </span>
                                 )}
                               </div>
@@ -433,22 +433,22 @@ export default function VolunteerClubDashboard() {
                                     <span className="font-medium">Donator:</span> {donation.donatorName}
                                   </div>
                                 )}
-                                {donation.donatorContactNumber && (
+                                {donation.donatorMobileNumber && (
                                   <div>
-                                    <span className="font-medium">Contact:</span> {donation.donatorContactNumber}
+                                    <span className="font-medium">Contact:</span> {donation.donatorMobileNumber}
                                   </div>
                                 )}
-                                {donation.scheduledPickupDate && (
+                                {donation.createdAt && (
                                   <div>
-                                    <span className="font-medium">Scheduled:</span>{' '}
-                                    {new Date(donation.scheduledPickupDate).toLocaleDateString()}
+                                    <span className="font-medium">Created:</span>{' '}
+                                    {new Date(donation.createdAt).toLocaleDateString()}
                                   </div>
                                 )}
                               </div>
-                              {donation.pickupLocation && (
+                              {Object.keys(donation.rationItems || {}).length > 0 && (
                                 <p className="text-sm text-gray-600 mb-4">
-                                  <MapPin className="w-4 h-4 inline mr-1" />
-                                  Pickup: {donation.pickupLocation}
+                                  <Package className="w-4 h-4 inline mr-1" />
+                                  Items: {Object.entries(donation.rationItems).map(([item, qty]) => `${item} (${qty})`).join(', ')}
                                 </p>
                               )}
                             </div>
@@ -495,14 +495,14 @@ export default function VolunteerClubDashboard() {
                                     <span className="font-medium">Location:</span> {camp.location}
                                   </div>
                                 )}
-                                {camp.district && (
+                                {camp.peopleRange && (
                                   <div>
-                                    <span className="font-medium">District:</span> {camp.district}
+                                    <span className="font-medium">People Range:</span> {camp.peopleRange}
                                   </div>
                                 )}
-                                {camp.capacity && (
+                                {camp.peopleCount && (
                                   <div>
-                                    <span className="font-medium">Capacity:</span> {camp.capacity}
+                                    <span className="font-medium">People Count:</span> {camp.peopleCount}
                                   </div>
                                 )}
                               </div>

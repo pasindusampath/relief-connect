@@ -106,7 +106,15 @@ export class CreateCampDto extends BaseDto implements IBodyDto, ICreateCamp {
       this.description = data.description;
       this.location = data.location;
       this.items = data.items;
-      this.dropOffLocations = data.dropOffLocations;
+      // Convert dropOffLocations lat/lng to strings if they are numbers
+      this.dropOffLocations = data.dropOffLocations?.map(loc => ({
+        name: loc.name,
+        address: loc.address,
+        lat: loc.lat !== undefined ? (typeof loc.lat === 'number' ? String(loc.lat) : loc.lat) : undefined,
+        lng: loc.lng !== undefined ? (typeof loc.lng === 'number' ? String(loc.lng) : loc.lng) : undefined,
+        contactNumber: loc.contactNumber,
+        notes: loc.notes,
+      }));
       this.helpRequestIds = data.helpRequestIds;
       this.donationIds = data.donationIds;
     }

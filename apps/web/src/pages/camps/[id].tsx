@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -36,32 +36,7 @@ export default function CampDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    if (id) {
-      loadCamp();
-    }
-  }, [id, isAuthenticated, authLoading, router]);
-
-  // Scroll to drop-off locations section if tab=dropoff query param is present
-  useEffect(() => {
-    if (router.query.tab === 'dropoff' && camp) {
-      setTimeout(() => {
-        const element = document.getElementById('dropoff-locations');
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
-  }, [router.query.tab, camp]);
-
-  const loadCamp = async () => {
+  const loadCamp = useCallback(async () => {
     if (!id || typeof id !== 'string') {
       setError('Invalid camp ID');
       setLoading(false);
@@ -91,7 +66,32 @@ export default function CampDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (id) {
+      loadCamp();
+    }
+  }, [id, isAuthenticated, authLoading, router, loadCamp]);
+
+  // Scroll to drop-off locations section if tab=dropoff query param is present
+  useEffect(() => {
+    if (router.query.tab === 'dropoff' && camp) {
+      setTimeout(() => {
+        const element = document.getElementById('dropoff-locations');
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
+  }, [router.query.tab, camp]);
 
   if (authLoading || loading) {
     return (

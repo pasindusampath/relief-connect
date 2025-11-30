@@ -59,7 +59,7 @@ export default function CreateCampPage() {
     shortNote: '',
     description: '',
     location: '',
-    contactType: ContactType.Phone,
+    contactType: ContactType.PHONE,
     contact: '',
   });
 
@@ -423,9 +423,9 @@ export default function CreateCampPage() {
                         required
                         disabled={loading}
                       >
-                        <option value={ContactType.Phone}>Phone</option>
-                        <option value={ContactType.WhatsApp}>WhatsApp</option>
-                        <option value={ContactType.None}>None</option>
+                        <option value={ContactType.PHONE}>Phone</option>
+                        <option value={ContactType.WHATSAPP}>WhatsApp</option>
+                        <option value={ContactType.NONE}>None</option>
                       </select>
                     </div>
 
@@ -637,7 +637,7 @@ export default function CreateCampPage() {
                             disabled={loading}
                             className="rounded"
                           />
-                          <span className="text-sm">{hr.description || hr.shortNote} - {hr.district || 'Unknown'}</span>
+                          <span className="text-sm">{hr.shortNote} - {hr.approxArea || 'Unknown'}</span>
                         </label>
                       ))
                     )}

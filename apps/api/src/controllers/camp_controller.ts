@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import { CampService } from '../services';
 import { CreateCampDto, UpdateCampDto } from '@nx-mono-repo-deployment-test/shared/src/dtos';
 import { CampType, CampNeed } from '@nx-mono-repo-deployment-test/shared/src/enums';
-import { IAuthRequest } from '@nx-mono-repo-deployment-test/shared/src/interfaces';
 
 /**
  * Controller for Camp endpoints
@@ -58,7 +57,7 @@ class CampController {
    * GET /api/camps/:id
    * Get a single camp by ID (requires authentication - only accessible by admins or owning volunteer club)
    */
-  getCampById = async (req: IAuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  getCampById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user || !req.user.id) {
         res.sendError('Authentication required', 401);
@@ -92,7 +91,7 @@ class CampController {
    * Update an existing camp (only accessible by admins or owning volunteer club)
    * Note: Body validation is handled by middleware
    */
-  updateCamp = async (req: IAuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  updateCamp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user || !req.user.id) {
         res.sendError('User not authenticated', 401);

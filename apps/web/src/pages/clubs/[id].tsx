@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -20,24 +20,7 @@ export default function ClubDetailPage() {
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
 
-  useEffect(() => {
-    // Wait for auth to finish loading before checking
-    if (authLoading) {
-      return;
-    }
-
-    // Check authentication after loading is complete
-    if (!isAuthenticated) {
-      router.push('/login');
-      return;
-    }
-
-    if (id) {
-      loadData();
-    }
-  }, [id, isAuthenticated, authLoading, router]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -61,7 +44,24 @@ export default function ClubDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    // Wait for auth to finish loading before checking
+    if (authLoading) {
+      return;
+    }
+
+    // Check authentication after loading is complete
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (id) {
+      loadData();
+    }
+  }, [id, isAuthenticated, authLoading, router, loadData]);
 
   const handleRequestJoin = async () => {
     if (!club) return;
@@ -111,7 +111,7 @@ export default function ClubDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Club Not Found</h1>
-          <p className="text-gray-600 mb-4">The volunteer club you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-4">The volunteer club you&apos;re looking for doesn&apos;t exist.</p>
           <Link href="/clubs">
             <Button>Back to Clubs</Button>
           </Link>

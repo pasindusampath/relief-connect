@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -76,18 +76,7 @@ export default function EditCampPage() {
   const [selectedHelpRequests, setSelectedHelpRequests] = useState<number[]>([]);
   const [selectedDonations, setSelectedDonations] = useState<number[]>([]);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated || !isVolunteerClub()) {
-      router.push('/login');
-      return;
-    }
-    if (id) {
-      loadCampData();
-    }
-  }, [id, isAuthenticated, isVolunteerClub, authLoading, router]);
-
-  const loadCampData = async () => {
+  const loadCampData = useCallback(async () => {
     if (!id || typeof id !== 'string') {
       setError('Invalid camp ID');
       setInitialLoading(false);
@@ -172,7 +161,18 @@ export default function EditCampPage() {
     } finally {
       setInitialLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated || !isVolunteerClub()) {
+      router.push('/login');
+      return;
+    }
+    if (id) {
+      loadCampData();
+    }
+  }, [id, isAuthenticated, isVolunteerClub, authLoading, router, loadCampData]);
 
   const handleNeedToggle = (need: CampNeed) => {
     setFormData(prev => ({
@@ -762,7 +762,7 @@ export default function EditCampPage() {
                             disabled={loading}
                             className="rounded"
                           />
-                          <span className="text-sm">{hr.description || hr.shortNote} - {hr.district || 'Unknown'}</span>
+                          <span className="text-sm">{hr.shortNote} - {hr.approxArea || 'Unknown'}</span>
                         </label>
                       ))
                     )}

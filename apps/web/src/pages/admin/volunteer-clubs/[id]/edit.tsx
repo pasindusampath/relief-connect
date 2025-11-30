@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
@@ -18,18 +18,7 @@ export default function EditVolunteerClubPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated || !isAdmin()) {
-      router.push('/login');
-      return;
-    }
-
-    if (id) {
-      loadClub();
-    }
-  }, [id, isAuthenticated, isAdmin, router]);
-
-  const loadClub = async () => {
+  const loadClub = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -48,7 +37,18 @@ export default function EditVolunteerClubPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isAdmin()) {
+      router.push('/login');
+      return;
+    }
+
+    if (id) {
+      loadClub();
+    }
+  }, [id, isAuthenticated, isAdmin, router, loadClub]);
 
   const handleSubmit = async (data: IUpdateVolunteerClub) => {
     if (!club) return;
@@ -110,7 +110,7 @@ export default function EditVolunteerClubPage() {
   );
 }
 
-export async function getStaticProps({ locale }: { locale: string }) {
+export async function getServerSideProps({ locale }: { locale: string }) {
   return {
     props: {
       ...(await serverSideTranslations(locale || 'en', ['common'])),

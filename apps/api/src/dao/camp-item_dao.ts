@@ -1,5 +1,6 @@
 import CampItemModel from '../models/camp-item.model';
 import { ICampItem } from '@nx-mono-repo-deployment-test/shared/src/interfaces/camp/ICampItem';
+import { RationItemType } from '@nx-mono-repo-deployment-test/shared/src/enums';
 
 class CampItemDao {
   private static instance: CampItemDao;
@@ -13,7 +14,7 @@ class CampItemDao {
     return CampItemDao.instance;
   }
 
-  public async create(campId: number, itemType: string, quantity: number, notes?: string): Promise<ICampItem> {
+  public async create(campId: number, itemType: RationItemType, quantity: number, notes?: string): Promise<ICampItem> {
     try {
       const item = await CampItemModel.create({
         [CampItemModel.ITEM_CAMP_ID]: campId,

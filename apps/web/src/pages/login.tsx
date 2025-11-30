@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { ArrowLeft, User } from 'lucide-react'
 import apiClient from '../services/api-client'
 import { useAuth } from '../hooks/useAuth'
+import { UserRole } from '../types/user'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -67,11 +68,14 @@ export default function LoginPage() {
       console.log('Login response:', response)
 
       if (response.success && response.data) {
-        // Update auth context
+        // Update auth context - cast role to UserRole type
         authLogin(
           response.data.accessToken,
           response.data.refreshToken,
-          response.data.user
+          {
+            ...response.data.user,
+            role: response.data.user.role as UserRole,
+          }
         )
         
         setLoading(false)
