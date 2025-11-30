@@ -478,7 +478,9 @@ export default function LandingPage() {
   }
 
   const handleHelpVolunteers = () => {
-    router.push('/find-clubs')
+    router.push('/camps').catch((err) => {
+      console.error('[LandingPage] Navigation error:', err)
+    })
   }
 
   const handleUseMyLocation = () => {
@@ -680,7 +682,7 @@ export default function LandingPage() {
                     Help Volunteers
                   </CardTitle>
                   <CardDescription className="text-base sm:text-lg mt-2 text-blue-50 font-sub drop-shadow-md px-2">
-                    Find volunteer clubs and support their efforts
+                    Find volunteer camps and support their efforts
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0 pb-6 sm:pb-8 relative z-10">
@@ -689,7 +691,7 @@ export default function LandingPage() {
                     className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold bg-white text-blue-600 hover:bg-gradient-to-r hover:from-orange-500 hover:to-orange-600 hover:text-white hover:shadow-xl transition-all duration-300 font-bold"
                     size="lg"
                   >
-                    Find Clubs
+                    Find Camps
                   </Button>
                 </CardContent>
               </Card>
