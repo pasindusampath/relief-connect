@@ -195,9 +195,10 @@ const CampPopupContent: React.FC<{
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm text-center flex items-center justify-center gap-1"
+                style={{ color: 'white' }}
               >
-                <span>💬</span>
-                <span>WhatsApp</span>
+                <span style={{ color: 'white' }}>💬</span>
+                <span style={{ color: 'white' }}>WhatsApp</span>
               </a>
             )}
           </div>
@@ -311,9 +312,10 @@ const PopupContent: React.FC<{
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 text-sm text-center flex items-center justify-center gap-1"
+                style={{ color: 'white' }}
               >
-                <span>💬</span>
-                <span>WhatsApp</span>
+                <span style={{ color: 'white' }}>💬</span>
+                <span style={{ color: 'white' }}>WhatsApp</span>
               </a>
             )}
           </div>
