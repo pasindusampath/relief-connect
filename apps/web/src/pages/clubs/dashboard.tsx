@@ -47,7 +47,7 @@ export default function VolunteerClubDashboard() {
   const [camps, setCamps] = useState<ICamp[]>([]);
   const [memberships, setMemberships] = useState<IMembership[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'help-requests' | 'donations' | 'camps' | 'memberships' | 'camp-donations'>('help-requests');
+  const [activeTab, setActiveTab] = useState<'help-requests' | 'camps' | 'memberships' | 'camp-donations'>('help-requests');
   const [reviewingMembershipId, setReviewingMembershipId] = useState<number | null>(null);
   const [acceptingDonationId, setAcceptingDonationId] = useState<number | null>(null);
   const [showCreateDonationModal, setShowCreateDonationModal] = useState(false);
@@ -128,16 +128,6 @@ export default function VolunteerClubDashboard() {
       hr.approxArea?.toLowerCase().includes(search) ||
       hr.name?.toLowerCase().includes(search) ||
       hr.contact?.toLowerCase().includes(search)
-    );
-  });
-
-  const filteredDonations = donations.filter(d => {
-    if (!searchTerm) return true;
-    const search = searchTerm.toLowerCase();
-    return (
-      d.donatorName?.toLowerCase().includes(search) ||
-      d.donatorMobileNumber?.toLowerCase().includes(search) ||
-      d.donatorUsername?.toLowerCase().includes(search)
     );
   });
 
@@ -373,49 +363,42 @@ export default function VolunteerClubDashboard() {
 
           {/* Tabs */}
           <Card>
-            <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardHeader className="p-3 sm:p-4 lg:p-6 overflow-hidden">
               <div className="flex flex-col gap-4 mb-4">
-                <div className="overflow-x-auto -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6">
-                  <div className="flex space-x-1 border-b border-gray-200 min-w-max sm:min-w-0 pb-1">
+                <div className="overflow-x-auto scroll-smooth -mx-3 sm:-mx-4 lg:-mx-6 px-3 sm:px-4 lg:px-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <div className="flex space-x-1 border-b border-gray-200 pb-1 pr-6 sm:pr-8 lg:pr-12" style={{ width: 'max-content' }}>
                     <button
                       onClick={() => setActiveTab('help-requests')}
-                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap flex items-center justify-center flex-shrink-0 ${
                         activeTab === 'help-requests'
                           ? 'text-blue-600 border-b-2 border-blue-600'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
-                      Help Requests
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('donations')}
-                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                        activeTab === 'donations'
-                          ? 'text-blue-600 border-b-2 border-blue-600'
-                          : 'text-gray-600 hover:text-gray-900'
-                      }`}
-                    >
-                      Donations
+                      <Users className="w-5 h-5 sm:hidden" />
+                      <span className="hidden sm:inline">Help Requests</span>
                     </button>
                     <button
                       onClick={() => setActiveTab('camps')}
-                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
+                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap flex items-center justify-center flex-shrink-0 ${
                         activeTab === 'camps'
                           ? 'text-blue-600 border-b-2 border-blue-600'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
-                      Camps
+                      <MapPin className="w-5 h-5 sm:hidden" />
+                      <span className="hidden sm:inline">Camps</span>
                     </button>
                     <button
                       onClick={() => setActiveTab('memberships')}
-                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap flex items-center ${
+                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap flex items-center justify-center flex-shrink-0 ${
                         activeTab === 'memberships'
                           ? 'text-blue-600 border-b-2 border-blue-600'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
-                      Memberships
+                      <Building2 className="w-5 h-5 sm:hidden" />
+                      <span className="hidden sm:inline">Memberships</span>
                       {memberships.filter((m) => m.status === 'PENDING').length > 0 && (
                         <span className="ml-1.5 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full">
                           {memberships.filter((m) => m.status === 'PENDING').length}
@@ -424,13 +407,14 @@ export default function VolunteerClubDashboard() {
                     </button>
                     <button
                       onClick={() => setActiveTab('camp-donations')}
-                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap flex items-center ${
+                      className={`px-3 sm:px-4 py-2 font-medium text-xs sm:text-sm whitespace-nowrap flex items-center justify-center flex-shrink-0 ${
                         activeTab === 'camp-donations'
                           ? 'text-blue-600 border-b-2 border-blue-600'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                     >
-                      Camp Donations
+                      <HandHeart className="w-5 h-5 sm:hidden" />
+                      <span className="hidden sm:inline">Camp Donations</span>
                       {campDonations.filter((d) => !d.ownerMarkedCompleted).length > 0 && (
                         <span className="ml-1.5 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full">
                           {campDonations.filter((d) => !d.ownerMarkedCompleted).length}
@@ -515,7 +499,7 @@ export default function VolunteerClubDashboard() {
                             </div>
                             <div className="flex flex-row sm:flex-col gap-2 sm:ml-4 flex-shrink-0">
                               <Link
-                                href={`/help-requests/${hr.id}`}
+                                href={`/request/${hr.id}?from=dashboard`}
                                 className="flex-1 sm:flex-none"
                               >
                                 <Button
