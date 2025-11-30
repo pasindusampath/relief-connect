@@ -17,8 +17,8 @@ class HelpRequestController {
 
   /**
    * GET /api/help-requests
-   * Get all help requests with optional filters
-   * Query params: urgency, district, minLat, maxLat, minLng, maxLng
+   * Get all help requests with optional filters and pagination
+   * Query params: urgency, district, minLat, maxLat, minLng, maxLng, page, limit
    */
   getHelpRequests = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -26,6 +26,8 @@ class HelpRequestController {
         urgency?: Urgency;
         district?: string;
         bounds?: { minLat: number; maxLat: number; minLng: number; maxLng: number };
+        page?: number;
+        limit?: number;
       } = {};
 
       // Parse query parameters
@@ -50,6 +52,20 @@ class HelpRequestController {
           minLat >= -90 && maxLat <= 90 && minLng >= -180 && maxLng <= 180
         ) {
           filters.bounds = { minLat, maxLat, minLng, maxLng };
+        }
+      }
+
+      // Parse pagination parameters
+      if (req.query.page) {
+        const page = parseInt(req.query.page as string, 10);
+        if (!isNaN(page) && page > 0) {
+          filters.page = page;
+        }
+      }
+      if (req.query.limit) {
+        const limit = parseInt(req.query.limit as string, 10);
+        if (!isNaN(limit) && limit > 0 && limit <= 100) {
+          filters.limit = limit;
         }
       }
 

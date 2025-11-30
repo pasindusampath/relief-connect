@@ -25,12 +25,15 @@ class HelpRequestDao {
   /**
    * Find all help requests, filtering out expired ones (30 days)
    * Optional filters: urgency, district (via approxArea), bounds (viewport filtering)
+   * Optional pagination: page, limit
    */
   public async findAll(filters?: {
     urgency?: Urgency;
     district?: string;
     bounds?: { minLat: number; maxLat: number; minLng: number; maxLng: number };
-  }): Promise<IHelpRequest[]> {
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: IHelpRequest[]; total: number }> {
     try {
       // Calculate date 30 days ago
       const thirtyDaysAgo = new Date();
@@ -66,11 +69,25 @@ class HelpRequestDao {
         }
       }
 
+      // Get total count for pagination
+      const total = await HelpRequestModel.count({ where: whereClause });
+
+      // Apply pagination
+      const page = filters?.page || 1;
+      const limit = filters?.limit || 10;
+      const offset = (page - 1) * limit;
+
       const helpRequests = await HelpRequestModel.findAll({
         where: whereClause,
         order: [[HelpRequestModel.HELP_REQUEST_CREATED_AT, 'DESC']],
+        limit,
+        offset,
       });
-      return helpRequests.map(hr => hr.toJSON() as IHelpRequest);
+      
+      return {
+        data: helpRequests.map(hr => hr.toJSON() as IHelpRequest),
+        total,
+      };
     } catch (error) {
       console.error('Error in HelpRequestDao.findAll:', error);
       throw error;
