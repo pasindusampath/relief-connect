@@ -784,7 +784,7 @@ export default function VolunteerClubDashboard() {
                                         <div className="flex flex-row sm:flex-col gap-2 sm:ml-4 flex-shrink-0">
                                           <Button
                                             size="sm"
-                                            onClick={() => handleAcceptCampDonation(camp.id!, donation.id)}
+                                            onClick={() => handleAcceptCampDonation(donation.campId!, donation.id)}
                                             disabled={acceptingDonationId === donation.id}
                                             className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
                                           >
@@ -864,9 +864,9 @@ export default function VolunteerClubDashboard() {
       {/* create donation modal */}
       {showCreateDonationModal && (
         <CreateCampDonationModal
+          camps={camps}
           isOpen={showCreateDonationModal}
           onClose={() => setShowCreateDonationModal(false)}
-          clubId={club?.id}
           onDonationCreated={() => {
             setShowCreateDonationModal(false)
             loadDashboardData()
