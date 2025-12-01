@@ -42,8 +42,8 @@ interface FormData {
   pets: number
   gpsLocation: { lat: number; lng: number }
   address: string
-  province: Province | ''
-  district: District | ''
+  province: Province | 0
+  district: District | 0
   notes: string
   rationItems: Record<string, number> // Changed from boolean to number (0 = not selected, >0 = quantity)
   specialNeeds: string
@@ -87,8 +87,8 @@ export default function EmergencyRequestForm({
     pets: 0,
     gpsLocation: { lat: 0, lng: 0 },
     address: '',
-    province: '' as Province | '',
-    district: '' as District | '',
+    province: 0,
+    district: 0,
     notes: '',
     rationItems: {},
     specialNeeds: '',
@@ -150,11 +150,11 @@ export default function EmergencyRequestForm({
         setError('Address is required')
         return
       }
-      if (!formData.province || formData.province === '') {
+      if (!formData.province || (formData.province as number) === 0) {
         setError('Province is required')
         return
       }
-      if (!formData.district || formData.district === '') {
+      if (!formData.district || (formData.district as number) === 0) {
         setError('District is required')
         return
       }
@@ -448,7 +448,7 @@ export default function EmergencyRequestForm({
                 {(!formData.gpsLocation.lat || !formData.gpsLocation.lng || 
                   formData.gpsLocation.lat === 0 || formData.gpsLocation.lng === 0) && (
                   <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-3 py-2 rounded-md text-sm mb-2">
-                    <strong>Location required:</strong> Please click on the map to select your exact location. You can use "Use My Location" button, but if it doesn't work, you must click on the map to proceed.
+                    <strong>Location required:</strong> Please click on the map to select your exact location. You can use &quot;Use My Location&quot; button, but if it doesn&apos;t work, you must click on the map to proceed.
                   </div>
                 )}
                 <MapLocationPicker
@@ -482,26 +482,26 @@ export default function EmergencyRequestForm({
                 </Label>
                 <select
                   id="province"
-                  value={formData.province || ''}
+                  value={formData.province || 0}
                   onChange={(e) => {
-                    const provinceValue = e.target.value ? Number(e.target.value) as Province : ''
+                    const provinceValue = e.target.value ? Number(e.target.value) as Province : 0
                     setFormData({ 
                       ...formData, 
                       province: provinceValue,
-                      district: '' as District | '' // Reset district when province changes
+                      district: 0 // Reset district when province changes
                     })
                   }}
                   className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   required
                 >
-                  <option value="">Select Province</option>
+                  <option value="0">Select Province</option>
                   {Object.entries(PROVINCE_NAMES).map(([key, name]) => (
                     <option key={key} value={key}>
                       {name}
                     </option>
                   ))}
                 </select>
-                {!formData.province && (
+                {(!formData.province || (formData.province as number) === 0) && (
                   <p className="text-sm text-red-600">Province is required</p>
                 )}
               </div>
@@ -512,26 +512,26 @@ export default function EmergencyRequestForm({
                 </Label>
                 <select
                   id="district"
-                  value={formData.district || ''}
+                  value={formData.district || 0}
                   onChange={(e) => {
-                    const districtValue = e.target.value ? Number(e.target.value) as District : ''
+                    const districtValue = e.target.value ? Number(e.target.value) as District : 0
                     setFormData({ ...formData, district: districtValue })
                   }}
                   className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   required
-                  disabled={!formData.province}
+                  disabled={!formData.province || (formData.province as number) === 0}
                 >
-                  <option value="">Select District</option>
+                  <option value="0">Select District</option>
                   {formData.province && PROVINCE_DISTRICTS[formData.province]?.map((district) => (
                     <option key={district} value={district}>
                       {DISTRICT_NAMES[district]}
                     </option>
                   ))}
                 </select>
-                {!formData.district && (
+                {(!formData.district || (formData.district as number) === 0) && (
                   <p className="text-sm text-red-600">District is required</p>
                 )}
-                {!formData.province && (
+                {(!formData.province || (formData.province as number) === 0) && (
                   <p className="text-sm text-gray-500">Please select a province first</p>
                 )}
               </div>
