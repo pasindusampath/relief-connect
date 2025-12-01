@@ -17,6 +17,11 @@ import { ICreateHelpRequest } from '@nx-mono-repo-deployment-test/shared/src/int
 import {
   Urgency,
   ContactType,
+  Province,
+  District,
+  PROVINCE_NAMES,
+  DISTRICT_NAMES,
+  PROVINCE_DISTRICTS,
 } from '@nx-mono-repo-deployment-test/shared/src/enums'
 import { Minus, Plus, MapPin } from 'lucide-react'
 
@@ -37,6 +42,8 @@ interface FormData {
   pets: number
   gpsLocation: { lat: number; lng: number }
   address: string
+  province: Province | ''
+  district: District | ''
   notes: string
   rationItems: Record<string, number> // Changed from boolean to number (0 = not selected, >0 = quantity)
   specialNeeds: string
@@ -80,6 +87,8 @@ export default function EmergencyRequestForm({
     pets: 0,
     gpsLocation: { lat: 0, lng: 0 },
     address: '',
+    province: '' as Province | '',
+    district: '' as District | '',
     notes: '',
     rationItems: {},
     specialNeeds: '',
@@ -139,6 +148,14 @@ export default function EmergencyRequestForm({
       }
       if (!formData.address.trim()) {
         setError('Address is required')
+        return
+      }
+      if (!formData.province || formData.province === '') {
+        setError('Province is required')
+        return
+      }
+      if (!formData.district || formData.district === '') {
+        setError('District is required')
         return
       }
     }
@@ -227,6 +244,9 @@ export default function EmergencyRequestForm({
         pets: formData.pets > 0 ? formData.pets : undefined,
         // Ration items with quantities (object format only)
         rationItems: Object.keys(rationItemsWithQuantities).length > 0 ? rationItemsWithQuantities : undefined,
+        // Location details (mandatory in frontend)
+        province: formData.province || undefined,
+        district: formData.district || undefined,
       }
 
       const response = await onSubmit(helpRequestData)
@@ -447,12 +467,72 @@ export default function EmergencyRequestForm({
                   id="address"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter your address (e.g., street, city, district)"
+                  placeholder="Enter your address (e.g., street, city)"
                   className="w-full"
                   required
                 />
                 {!formData.address.trim() && (
                   <p className="text-sm text-red-600">Address is required</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="province">
+                  Province *
+                </Label>
+                <select
+                  id="province"
+                  value={formData.province || ''}
+                  onChange={(e) => {
+                    const provinceValue = e.target.value ? Number(e.target.value) as Province : ''
+                    setFormData({ 
+                      ...formData, 
+                      province: provinceValue,
+                      district: '' as District | '' // Reset district when province changes
+                    })
+                  }}
+                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                >
+                  <option value="">Select Province</option>
+                  {Object.entries(PROVINCE_NAMES).map(([key, name]) => (
+                    <option key={key} value={key}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+                {!formData.province && (
+                  <p className="text-sm text-red-600">Province is required</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="district">
+                  District *
+                </Label>
+                <select
+                  id="district"
+                  value={formData.district || ''}
+                  onChange={(e) => {
+                    const districtValue = e.target.value ? Number(e.target.value) as District : ''
+                    setFormData({ ...formData, district: districtValue })
+                  }}
+                  className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  required
+                  disabled={!formData.province}
+                >
+                  <option value="">Select District</option>
+                  {formData.province && PROVINCE_DISTRICTS[formData.province]?.map((district) => (
+                    <option key={district} value={district}>
+                      {DISTRICT_NAMES[district]}
+                    </option>
+                  ))}
+                </select>
+                {!formData.district && (
+                  <p className="text-sm text-red-600">District is required</p>
+                )}
+                {!formData.province && (
+                  <p className="text-sm text-gray-500">Please select a province first</p>
                 )}
               </div>
 
