@@ -8,8 +8,8 @@ import { LifeBuoy, Tent, Users, Gift, Plus, Building2, Settings, LogOut, X, Menu
 interface ClubDashboardSidebarProps {
   clubName?: string
   onLogout: () => void
-  activeTab?: "help-requests" | "camps" | "memberships" | "camp-donations"
-  onTabChange?: (tab: "help-requests" | "camps" | "memberships" | "camp-donations") => void
+  activeTab?: string
+  onTabChange?: (tab: string) => void
   onCreateCampClick?: () => void
 }
 
@@ -47,7 +47,7 @@ export default function ClubDashboardSidebar({
       category: "MANAGE",
       items: [
         { icon: Plus, label: "Create Camp", action: "create-camp" },
-        { icon: Building2, label: "View Club Info", href: "/clubs/my-club" },
+        { icon: Building2, label: "View Club Info", href: "/clubs/my-club", id: "view-club-info" },
       ],
     },
     // {
@@ -64,7 +64,7 @@ export default function ClubDashboardSidebar({
       tabValue === "camp-donations"
     ) {
       if (onTabChange) {
-        onTabChange(tabValue as "help-requests" | "camps" | "memberships" | "camp-donations")
+        onTabChange(tabValue)
       } else {
         router.push(`/clubs/dashboard?tab=${tabValue}`)
       }
@@ -141,11 +141,10 @@ export default function ClubDashboardSidebar({
                           handleTabClick(item.tabValue)
                           setIsSidebarOpen(false)
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-sm font-medium ${
-                          activeTab === item.tabValue
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-sm font-medium ${activeTab === item.tabValue
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "text-gray-700 hover:bg-gray-100"
+                          }`}
                       >
                         <Icon className="w-5 h-5 flex-shrink-0" />
                         {item.label}
@@ -174,10 +173,21 @@ export default function ClubDashboardSidebar({
                       key={itemIdx}
                       href={item.href}
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-sm font-medium text-gray-700 hover:bg-gray-100"
+                      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left text-sm font-medium ${activeTab === (item as any).id
+                        ? "bg-emerald-50"
+                        : "hover:bg-gray-100"
+                        }`}
                     >
-                      <Icon className="w-5 h-5 flex-shrink-0" />
-                      {item.label}
+                      <Icon
+                        className={`w-5 h-5 flex-shrink-0 ${activeTab === (item as any).id ? "text-emerald-700" : "text-gray-700 group-hover:text-emerald-700"
+                          }`}
+                      />
+                      <span
+                        className={`truncate ${activeTab === (item as any).id ? "text-emerald-700" : "text-gray-700 group-hover:text-emerald-700"
+                          }`}
+                      >
+                        {item.label}
+                      </span>
                     </a>
                   )
                 })}

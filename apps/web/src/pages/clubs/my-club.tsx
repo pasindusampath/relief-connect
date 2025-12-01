@@ -95,8 +95,8 @@ export default function MyClubPage() {
         <ClubDashboardSidebar
           clubName={club?.name || "Club"}
           onLogout={handleLogout}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
+          activeTab="view-club-info"
+          onTabChange={(tab) => handleTabChange(tab as any)}
           onCreateCampClick={() => setShowCreateCampDialog(true)}
         />
 

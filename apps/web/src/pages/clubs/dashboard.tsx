@@ -299,7 +299,7 @@ export default function VolunteerClubDashboard() {
           clubName={club?.name || "Club"}
           onLogout={handleLogout}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => setActiveTab(tab as any)}
           onCreateCampClick={() => setShowCreateCampDialog(true)}
         />
 
