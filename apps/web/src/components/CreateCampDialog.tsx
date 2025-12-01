@@ -211,7 +211,10 @@ export default function CreateCampDialog({ isOpen, onClose, onCampCreated }: Cre
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="sm:max-w-[45vw] max-w-[95vw] w-full max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Create New Camp</DialogTitle>
         </DialogHeader>
@@ -414,7 +417,7 @@ export default function CreateCampDialog({ isOpen, onClose, onCampCreated }: Cre
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-black"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-black min-h-[100px]"
                 disabled={loading}
               />
             </div>

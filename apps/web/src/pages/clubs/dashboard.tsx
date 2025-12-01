@@ -452,7 +452,7 @@ export default function VolunteerClubDashboard() {
                                 )}
                               </div>
                               <div className="hidden sm:block flex-shrink-0">
-                                <Link href={`/help-requests/${hr.id}`}>
+                                <Link href={`/request/${hr.id}?from=dashboard`}>
                                   <Button variant="outline" size="sm" className="bg-transparent">
                                     View Details
                                   </Button>
